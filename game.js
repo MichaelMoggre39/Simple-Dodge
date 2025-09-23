@@ -12,6 +12,16 @@ let y = 360; // center vertically
 const size = 40; // width and height of the square
 const speed = 5; // movement speed per frame
 
+// Transformation Pickups
+const pickups = [
+  { x: 200, y: 150, size: 30, type: 'circle' },
+  { x: 600, y: 500, size: 30, type: 'triangle' },
+  { x: 1000, y: 300, size: 30, type: 'star' }
+];
+
+let currentShape = 'square'; // this tracks what shape you are
+
+
 // Track which keys are currently pressed
 const keys = {}
 window.addEventListener('keydown', e => keys[e.key] = true); // mark key as pressed
@@ -36,6 +46,23 @@ function update() {
   // Prevent the square from going outside the game world
   x = Math.max(0, Math.min(GAME_WIDTH - size, x));
   y = Math.max(0, Math.min(GAME_HEIGHT - size, y));
+
+  // Detect Collision With Pickups
+  function isColliding(ax, ay, asize, bx, by, bsize) {
+  return ax < bx + bsize &&
+         ax + asize > bx &&
+         ay < by + bsize &&
+         ay + asize > by;
+}
+
+for (let i = pickups.length - 1; i >= 0; i--) {
+  const p = pickups[i];
+  if (isColliding(x, y, size, p.x, p.y, p.size)) {
+    currentShape = p.type; // change shape
+    pickups.splice(i, 1);  // remove pickup from screen
+  }
+}
+
 }
 
 // Draw everything on the canvas
@@ -74,9 +101,33 @@ function draw() {
   ctx.lineWidth = 1;
   ctx.strokeRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-  // Draw the red square (player)
-  ctx.fillStyle = 'red';
+  // Draw pickups
+for (const p of pickups) {
+  ctx.fillStyle = 'gold';
+  ctx.beginPath();
+  ctx.arc(p.x + p.size / 2, p.y + p.size / 2, p.size / 2, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// Draw player shape
+ctx.fillStyle = 'red';
+ctx.beginPath();
+if (currentShape === 'square') {
   ctx.fillRect(x, y, size, size);
+} else if (currentShape === 'circle') {
+  ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2);
+  ctx.fill();
+} else if (currentShape === 'triangle') {
+  ctx.moveTo(x + size / 2, y);
+  ctx.lineTo(x, y + size);
+  ctx.lineTo(x + size, y + size);
+  ctx.closePath();
+  ctx.fill();
+} else if (currentShape === 'star') {
+  drawStar(ctx, x + size / 2, y + size / 2, 5, size / 2, size / 4);
+  ctx.fill();
+}
+
 
   ctx.restore(); // restore canvas to original state
 }
@@ -90,3 +141,29 @@ function loop () {
 
 // Start the game loop
 loop();
+
+function drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius) {
+  let rot = Math.PI / 2 * 3;
+  let x = cx;
+  let y = cy;
+  let step = Math.PI / spikes;
+
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - outerRadius);
+  for (let i = 0; i < spikes; i++) {
+    x = cx + Math.cos(rot) * outerRadius;
+    y = cy + Math.sin(rot) * outerRadius;
+    ctx.lineTo(x, y);
+    rot += step;
+
+    x = cx + Math.cos(rot) * innerRadius;
+    y = cy + Math.sin(rot) * innerRadius;
+    ctx.lineTo(x, y);
+    rot += step;
+  }
+  ctx.lineTo(cx, cy - outerRadius);
+  ctx.closePath();
+}
+
+// TODO
+// 1. Transform from Square into 3 other shapes when pickup up item
