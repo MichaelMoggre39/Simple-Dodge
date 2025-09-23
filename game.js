@@ -39,25 +39,37 @@ function update() {
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  // draw full canvas background
+  const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  gradient.addColorStop(1, '#2a5298');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
   // calculate scale factor
   const scaleX = canvas.width / GAME_WIDTH;
   const scaleY = canvas.height / GAME_HEIGHT;
-  const scale = Math.min(scaleX, scaleY); // preserve aspect ratio
-
-  ctx.save();
-  ctx.scale(scale, scale);
+  const scale = Math.min(scaleX, scaleY);
 
   // center the game world if letterboxed
   const offsetX = (canvas.width / scale - GAME_WIDTH) / 2;
   const offsetY = (canvas.height / scale - GAME_HEIGHT) / 2;
+
+  // draw letterbox area BEFORE scaling
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+  ctx.fillRect(0, 0, canvas.width, offsetY * scale); // top
+  ctx.fillRect(0, canvas.height - offsetY * scale, canvas.width, offsetY * scale); // bottom
+  ctx.fillRect(0, 0, offsetX * scale, canvas.height); // left
+  ctx.fillRect(canvas.width - offsetX * scale, 0, offsetX * scale, canvas.height); // right
+
+  // draw game world
+  ctx.save();
+  ctx.scale(scale, scale);
   ctx.translate(offsetX, offsetY);
 
-  // draw border
   ctx.strokeStyle = "black";
   ctx.lineWidth = 1;
   ctx.strokeRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-  // draw the square inside the fixed world
   ctx.fillStyle = 'red';
   ctx.fillRect(x, y, size, size);
 
