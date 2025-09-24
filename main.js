@@ -5,6 +5,7 @@ import { createInitialPickups } from './pickups.js';
 import { createInput } from './input.js';
 import { createGame } from './gameLoop.js';
 import { GAME_WIDTH, GAME_HEIGHT } from './constants.js';
+import './enemies.js'; // Ensure enemies module is loaded
 
 // --- Setup canvas and context ---
 const canvas = document.getElementById('gameCanvas');

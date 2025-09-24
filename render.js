@@ -3,6 +3,7 @@
 import { GAME_WIDTH, GAME_HEIGHT } from './constants.js';               // Import logical world dimensions
 import { drawStar } from './shapes.js';                                 // Import helper for star shape
 import { bullets } from './bullets.js';                                 // Import bullets array
+import { enemies } from './enemies.js';                                 // Import enemies array
 
 // --- Helper: Calculate scale and offset for world-to-canvas transform ---
 function getWorldTransform(canvas) {
@@ -78,11 +79,45 @@ export function render(ctx, canvas, gameState) {
       ctx.textAlign = 'center';
       ctx.fillText('START', p.x + p.size / 2, p.y + p.size + 22);
       ctx.restore();
-    } else {
+    } else if (p.type === 'circle') {
+      // Gold circle
+      ctx.save();
       ctx.fillStyle = 'gold';
       ctx.beginPath();
       ctx.arc(p.x + p.size / 2, p.y + p.size / 2, p.size / 2, 0, Math.PI * 2);
       ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#fff';
+      ctx.stroke();
+      ctx.restore();
+    } else if (p.type === 'triangle') {
+      // Gold triangle
+      ctx.save();
+      ctx.fillStyle = 'gold';
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      const cx = p.x + p.size / 2, cy = p.y + p.size / 2, r = p.size / 2;
+      for (let i = 0; i < 3; i++) {
+        const angle = Math.PI / 2 + i * (2 * Math.PI / 3);
+        const x = cx + Math.cos(angle) * r;
+        const y = cy + Math.sin(angle) * r;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    } else if (p.type === 'star') {
+      // Gold star
+      ctx.save();
+      ctx.fillStyle = 'gold';
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      drawStar(ctx, p.x + p.size / 2, p.y + p.size / 2, 5, p.size / 2, p.size / 4);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
     }
   }
 
@@ -156,12 +191,122 @@ function wrapTextLines(ctx, text, maxWidth) {
   // --- Draw player (supports multiple shapes) ---
   drawPlayer(ctx, gameState.player);
 
+  // --- Draw player health and score (level one) ---
+  if (gameState.inLevelOne) {
+    ctx.save();
+    ctx.font = '28px Arial';
+    ctx.fillStyle = '#fff';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 4;
+    const health = (gameState.maxHits || 3) - (gameState.playerHits || 0);
+    const text = `Health: ${health}`;
+    ctx.strokeText(text, 30, 50);
+    ctx.fillText(text, 30, 50);
+    // Draw score top right
+    const score = gameState.score || 0;
+    const scoreText = `Score: ${score}`;
+    ctx.strokeText(scoreText, GAME_WIDTH - 200, 50);
+    ctx.fillText(scoreText, GAME_WIDTH - 200, 50);
+    ctx.restore();
+  }
+
+  // --- Draw notification if player tries to enter portal as square ---
+  if (gameState.showPowerupNotification) {
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalAlpha = 0.92;
+  ctx.font = 'bold 32px Arial';
+  const notifText = 'Pick a powerup before entering the portal!';
+  const textMetrics = ctx.measureText(notifText);
+  const paddingX = 48;
+  const paddingY = 28;
+  const notifWidth = textMetrics.width + paddingX * 2;
+  const notifHeight = 64 + paddingY;
+  ctx.fillStyle = '#222';
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 4;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const x = ctx.canvas.width / 2, y = ctx.canvas.height / 2;
+  ctx.fillRect(x - notifWidth/2, y - notifHeight/2, notifWidth, notifHeight);
+  ctx.strokeRect(x - notifWidth/2, y - notifHeight/2, notifWidth, notifHeight);
+  ctx.fillStyle = '#fff';
+  ctx.fillText(notifText, x, y);
+  ctx.restore();
+  gameState.showPowerupNotification--;
+  if (gameState.showPowerupNotification <= 0) gameState.showPowerupNotification = 0;
+  }
+
+  // --- Draw custom game over overlay ---
+  if (gameState.gameOver) {
+    // Reset transform so overlay is always drawn in screen space
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalAlpha = 0.85;
+    ctx.fillStyle = '#111';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.globalAlpha = 1.0;
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    // Center overlay in the visible game world
+    const { scale, offsetX, offsetY } = getWorldTransform(canvas);
+    const worldCenterX = (GAME_WIDTH / 2 + offsetX) * scale;
+    const worldCenterY = (GAME_HEIGHT / 2 + offsetY) * scale;
+    // Calculate vertical layout
+    const titleFont = 'bold 80px Arial';
+    const scoreFont = '40px Arial';
+    const promptFont = '32px Arial';
+    const titleText = 'Game Over';
+    const scoreText = `Score: ${gameState.score || 0}`;
+    const promptText = 'Click to Restart';
+    // Heights
+    const titleHeight = 80;
+    const scoreHeight = 40;
+    const promptHeight = 32;
+    const gap1 = 32;
+    const gap2 = 32;
+    // Total height for vertical centering
+    const totalHeight = titleHeight + gap1 + scoreHeight + gap2 + promptHeight;
+    let y = worldCenterY - totalHeight / 2;
+    // Draw title
+    ctx.font = titleFont;
+    ctx.fillStyle = '#fff';
+    ctx.fillText(titleText, worldCenterX, y);
+    y += titleHeight + gap1;
+    // Draw score
+    ctx.font = scoreFont;
+    ctx.fillStyle = '#fff';
+    ctx.fillText(scoreText, worldCenterX, y);
+    y += scoreHeight + gap2;
+    // Draw prompt
+    ctx.font = promptFont;
+    ctx.fillStyle = '#0ff';
+    ctx.fillText(promptText, worldCenterX, y);
+    ctx.restore();
+    // Add click-to-restart event (only once)
+    if (!canvas._restartHandler) {
+      canvas._restartHandler = () => window.location.reload();
+      canvas.addEventListener('mousedown', canvas._restartHandler);
+    }
+  } else if (canvas._restartHandler) {
+    // Remove handler if not game over
+    canvas.removeEventListener('mousedown', canvas._restartHandler);
+    canvas._restartHandler = null;
+  }
+
   // --- Draw all bullets ---
   ctx.fillStyle = 'lime';
   for (const b of bullets) {
     ctx.beginPath();
     ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
     ctx.fill();
+  }
+
+  // --- Draw all enemies as small squares (level one)
+  ctx.fillStyle = '#a020f0'; // purple
+  for (const enemy of enemies) {
+    ctx.fillRect(enemy.x, enemy.y, enemy.size, enemy.size);
   }
 
   ctx.restore(); // Restore to pre-transform state

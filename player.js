@@ -23,7 +23,7 @@ export function createPlayer() {
 }
 
 // --- Update player position, state, and actions ---
-export function updatePlayer(player, keys) {
+export function updatePlayer(player, keys, state) {
   // --- Timers for dash/spin mechanics ---
   if (player.dashCooldown > 0) player.dashCooldown--;
   if (player.dashTime > 0) player.dashTime--;
@@ -34,7 +34,7 @@ export function updatePlayer(player, keys) {
   if (player.currentShape === 'circle') {
     handleCircleDash(player, keys);
   } else if (player.currentShape === 'star') {
-    handleStarSpin(player, keys);
+    handleStarSpin(player, keys, state);
   } else {
     handleDefaultMovement(player, keys);
   }
@@ -79,21 +79,26 @@ function handleCircleDash(player, keys) {
 }
 
 // --- Helper: Star spin mechanic ---
-function handleStarSpin(player, keys) {
-  // Initiate spin if left mouse is pressed and not already spinning
-  if (player.shooting && !player.spinning) {
+function handleStarSpin(player, keys, state) {
+  // Only allow spin if not spinning, not on cooldown, and mouse was released since last spin
+  if (!player._spinReady && !player.shooting) {
+    player._spinReady = true;
+  }
+  if (player.shooting && !player.spinning && player._spinReady && (!state || !state.starSpinCooldown || state.starSpinCooldown <= 0)) {
     player.spinTime = 15; // Spin lasts 15 frames
     player.spinning = true;
+    player._spinReady = false;
+    if (state) state.starSpinCooldown = 30; // 0.5 second cooldown (reduced)
   }
   handleDefaultMovement(player, keys);
 }
 
 // --- Helper: Default movement for all forms ---
 function handleDefaultMovement(player, keys) {
-  if (keys['ArrowUp']) player.y -= player.speed;
-  if (keys['ArrowDown']) player.y += player.speed;
-  if (keys['ArrowLeft']) player.x -= player.speed;
-  if (keys['ArrowRight']) player.x += player.speed;
+  if (keys['ArrowUp'] || keys['w'] || keys['W']) player.y -= player.speed;
+  if (keys['ArrowDown'] || keys['s'] || keys['S']) player.y += player.speed;
+  if (keys['ArrowLeft'] || keys['a'] || keys['A']) player.x -= player.speed;
+  if (keys['ArrowRight'] || keys['d'] || keys['D']) player.x += player.speed;
 }
 
 // --- Helper: Triangle aiming and shooting ---
