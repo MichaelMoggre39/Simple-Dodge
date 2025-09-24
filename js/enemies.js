@@ -1,8 +1,9 @@
 
 // enemies.js -- Handles enemy state and logic
+// This file manages all enemy creation, movement, collision, and removal in the game.
 
-import { createExplosion, createSparks, createColoredSparks, addScreenShake, COLORS } from './particles.js';
-import { playSound } from './audio.js';
+import { createExplosion, createSparks, createColoredSparks, addScreenShake, COLORS } from './particles.js'; // Import particle effects and color palette
+import { playSound } from './audio.js'; // Import sound effects
 
 export const enemies = []; // This array stores all the enemies currently in the game
 
@@ -66,9 +67,8 @@ export function updateEnemies(player, bullets, onPlayerHit, onEnemyDestroyed) { 
           COLORS.enemyDamage,
           4
         );
-        addScreenShake(3, 5);
-        playSound.enemyDestroy();
-        
+        addScreenShake(3, 5); // Add a small screen shake
+        playSound.enemyDestroy(); // Play enemy destroy sound
         enemies.splice(i, 1); // Remove enemy
         bullets.splice(j, 1); // Remove bullet
         if (onEnemyDestroyed) onEnemyDestroyed(2); // 2 points for bullet
@@ -82,10 +82,9 @@ export function updateEnemies(player, bullets, onPlayerHit, onEnemyDestroyed) { 
       const enemy = enemies[i];
       if (rectRectColliding(player, enemy)) { // If player touches enemy
         // Visual and audio effects
-  createExplosion(enemy.x + enemy.size / 2, enemy.y + enemy.size / 2, COLORS.starKill, 8);
-        addScreenShake(4, 6);
-        playSound.enemyDestroy();
-        
+        createExplosion(enemy.x + enemy.size / 2, enemy.y + enemy.size / 2, COLORS.starKill, 8); // Star kill explosion
+        addScreenShake(4, 6); // Add a bigger screen shake
+        playSound.enemyDestroy(); // Play enemy destroy sound
         enemies.splice(i, 1); // Remove enemy
         if (onEnemyDestroyed) onEnemyDestroyed(2); // 2 points for spin
       }
@@ -97,11 +96,10 @@ export function updateEnemies(player, bullets, onPlayerHit, onEnemyDestroyed) { 
       const enemy = enemies[i];
       if (rectRectColliding(player, enemy)) { // If player touches enemy
         // Visual and audio effects
-  createExplosion(enemy.x + enemy.size / 2, enemy.y + enemy.size / 2, COLORS.dashKill, 7);
-  createColoredSparks(enemy.x + enemy.size / 2, enemy.y + enemy.size / 2, COLORS.dashKill, 5);
-        addScreenShake(4, 6);
-        playSound.enemyDestroy();
-        
+        createExplosion(enemy.x + enemy.size / 2, enemy.y + enemy.size / 2, COLORS.dashKill, 7); // Dash kill explosion
+        createColoredSparks(enemy.x + enemy.size / 2, enemy.y + enemy.size / 2, COLORS.dashKill, 5); // Dash kill sparks
+        addScreenShake(4, 6); // Add a bigger screen shake
+        playSound.enemyDestroy(); // Play enemy destroy sound
         enemies.splice(i, 1); // Remove enemy
         if (onEnemyDestroyed) onEnemyDestroyed(2); // 2 points for dash
       }
@@ -117,10 +115,9 @@ export function updateEnemies(player, bullets, onPlayerHit, onEnemyDestroyed) { 
     for (const enemy of enemies) { // For each enemy
       if (rectRectColliding(player, enemy)) { // If player touches enemy
         // Visual and audio effects for player hit
-  createColoredSparks(player.x + player.size / 2, player.y + player.size / 2, COLORS.playerHit, 8);
-        addScreenShake(8, 12);
-        playSound.playerHit();
-        
+        createColoredSparks(player.x + player.size / 2, player.y + player.size / 2, COLORS.playerHit, 8); // Player hit sparks
+        addScreenShake(8, 12); // Big screen shake
+        playSound.playerHit(); // Play player hit sound
         if (onPlayerHit) onPlayerHit(); // Call the hit callback
       }
     }

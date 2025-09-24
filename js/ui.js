@@ -1,41 +1,38 @@
 // ui.js -- User interface system with menus and game states
 
-import { audioManager } from './audio.js';
+import { audioManager } from './audio.js'; // Import the audio manager for sound and settings
 
-export const UI_STATES = {
-  MAIN_MENU: 'mainMenu',
-  GAME_PLAYING: 'playing',
-  GAME_PAUSED: 'paused',
-  GAME_OVER: 'gameOver',
-  SETTINGS: 'settings',
-  TUTORIAL: 'tutorial'
+export const UI_STATES = { // Enum for UI states
+  MAIN_MENU: 'mainMenu', // Main menu state
+  GAME_PLAYING: 'playing', // Game playing state
+  GAME_PAUSED: 'paused', // Game paused state
+  GAME_OVER: 'gameOver', // Game over state
+  SETTINGS: 'settings', // Settings menu state
+  TUTORIAL: 'tutorial' // Tutorial state
 };
 
-export class UIManager {
-  constructor() {
-    console.log('UIManager initializing...');
-    this.currentState = UI_STATES.MAIN_MENU;
-    this.selectedMenuItem = 0;
-    this.menuItems = [];
-    this.menuItemPositions = [];
-    this.showControls = false;
-    this.settings = {
-      volume: 0.7,
-      soundEnabled: true,
-      showFPS: false
+export class UIManager { // UI manager class for handling all UI logic
+  constructor() { // Constructor for UIManager
+    console.log('UIManager initializing...'); // Log initialization
+    this.currentState = UI_STATES.MAIN_MENU; // Set initial state
+    this.selectedMenuItem = 0; // Index of selected menu item
+    this.menuItems = []; // Array of menu item labels
+    this.menuItemPositions = []; // Array of menu item positions for mouse
+    this.showControls = false; // Whether to show controls overlay
+    this.settings = { // UI settings
+      volume: 0.7, // Default volume
+      soundEnabled: true, // Sound enabled by default
+      showFPS: false // FPS display off by default
     };
-    
     // Load saved settings
     this.loadSettings();
-    
     // FPS tracking
-    this.fps = 60;
-    this.frameCount = 0;
-    this.lastFPSUpdate = Date.now();
-    
+    this.fps = 60; // Initial FPS
+    this.frameCount = 0; // Frame count for FPS
+    this.lastFPSUpdate = Date.now(); // Last FPS update timestamp
     // Initialize menu items
     this.updateMenuItems();
-    console.log('UIManager initialized with state:', this.currentState);
+    console.log('UIManager initialized with state:', this.currentState); // Log state
   }
   
   setState(newState) {

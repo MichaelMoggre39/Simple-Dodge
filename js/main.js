@@ -1,5 +1,6 @@
 
 // main.js -- Entry point: initializes the game and starts the loop
+// This file sets up the canvas, game state, and starts the main game loop.
 
 import { createPlayer, setupPlayerMouse } from './player.js'; // Import player creation and mouse setup
 import { createInitialPickups } from './pickups.js'; // Import function to create pickups
@@ -37,8 +38,8 @@ const state = { // This object holds all the main game data
 };
 
 // Initialize player mouse position to center
-state.player.mouseX = GAME_WIDTH / 2;
-state.player.mouseY = GAME_HEIGHT / 2;
+state.player.mouseX = GAME_WIDTH / 2; // Set initial mouse X
+state.player.mouseY = GAME_HEIGHT / 2; // Set initial mouse Y
 
 // --- Calculate scale and offset for mouse-to-world conversion ---
 const scaleX = canvas.width / GAME_WIDTH; // How much to scale horizontally
@@ -51,21 +52,21 @@ const offsetY = (canvas.height / scale - GAME_HEIGHT) / 2; // Vertical offset fo
 setupPlayerMouse(canvas, state.player, scale, offsetX, offsetY); // Enable mouse controls for the player
 
 // --- Create and start the game loop controller ---
-console.log('Starting Simple Dodge Enhanced Edition...');
-console.log('Canvas size:', canvas.width, 'x', canvas.height);
-console.log('Game state initialized:', state);
+console.log('Starting Simple Dodge Enhanced Edition...'); // Log game start
+console.log('Canvas size:', canvas.width, 'x', canvas.height); // Log canvas size
+console.log('Game state initialized:', state); // Log initial state
 
 // Add error handling for module loading
-window.addEventListener('error', (e) => {
-  console.error('Global error:', e.error);
+window.addEventListener('error', (e) => { // Listen for global errors
+  console.error('Global error:', e.error); // Log error
 });
 
 try {
   const game = createGame(canvas, ctx, state); // Create the game controller
-  console.log('Game controller created successfully');
+  console.log('Game controller created successfully'); // Log success
   game.start(); // Start the game loop
-  console.log('Game loop started');
+  console.log('Game loop started'); // Log loop start
 } catch (error) {
-  console.error('Error starting game:', error);
-  console.error('Stack trace:', error.stack);
+  console.error('Error starting game:', error); // Log error
+  console.error('Stack trace:', error.stack); // Log stack trace
 }

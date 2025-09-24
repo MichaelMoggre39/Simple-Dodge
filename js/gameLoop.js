@@ -1,6 +1,7 @@
 
 
 // gameLoop.js -- Orchestrates update & render each animation frame
+// This file manages the main game loop, including updates, rendering, and state transitions.
 
 import { updatePlayer } from './player.js'; // Import the function to update the player
 import { checkPickupCollisions, createInitialPickups } from './pickups.js'; // Import the function to check for pickup collisions
@@ -15,26 +16,25 @@ import { GAME_WIDTH, GAME_HEIGHT } from './constants.js'; // Import game dimensi
 
 // --- Factory: Build a game controller ---
 export function createGame(canvas, ctx, state) { // This function creates the main game controller
-  
   // Initialize UI system
   let gameState = 'menu'; // Track overall game state
-  let isPaused = false;
+  let isPaused = false; // Track if the game is paused
   let gameOverSoundPlayed = false; // Gate to avoid looping game-over sound
-  
+
   // Set up UI mouse controls
-  canvas.addEventListener('click', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    if (gameState === 'menu' || isPaused || state.gameOver) {
-      const uiAction = uiManager.handleMouseClick(x, y);
-      console.log('Mouse click UI action:', uiAction);
+  canvas.addEventListener('click', (e) => { // Listen for mouse clicks on the canvas
+    const rect = canvas.getBoundingClientRect(); // Get canvas position
+    const x = e.clientX - rect.left; // Mouse x relative to canvas
+    const y = e.clientY - rect.top; // Mouse y relative to canvas
+    if (gameState === 'menu' || isPaused || state.gameOver) { // If in menu, paused, or game over
+      const uiAction = uiManager.handleMouseClick(x, y); // Handle UI click
+      console.log('Mouse click UI action:', uiAction); // Log action
       if (uiAction) {
-        handleUIAction(uiAction);
+        handleUIAction(uiAction); // Handle the action
       }
     }
   });
+
   // --- Helper: Check collision with portal ---
   function checkPortalCollision(player, pickups) { // Checks if the player is touching the portal
     for (const p of pickups) { // Go through every pickup
@@ -72,11 +72,9 @@ export function createGame(canvas, ctx, state) { // This function creates the ma
     state.score = 0; // Reset the score
     state.gameOver = false; // The game is not over
     state.starSpinCooldown = 0; // Reset the star spin cooldown
-    
     // Play level start sound and music
-    playSound.levelStart();
-    audioManager.startAmbientMusic();
-
+    playSound.levelStart(); // Play level start sound
+    audioManager.startAmbientMusic(); // Start background music
     // Reset game over sound gate when starting level
     gameOverSoundPlayed = false;
   }
@@ -90,24 +88,19 @@ export function createGame(canvas, ctx, state) { // This function creates the ma
         const uiAction = uiManager.handleKeyPress('Enter');
         handleUIAction(uiAction);
       }
-      
       if (state.keys['Escape'] && !state.previousKeys['Escape']) {
         const uiAction = uiManager.handleKeyPress('Escape');
         handleUIAction(uiAction);
       }
-      
       if (state.keys['ArrowUp'] && !state.previousKeys['ArrowUp']) {
         uiManager.handleKeyPress('ArrowUp');
       }
-      
       if (state.keys['ArrowDown'] && !state.previousKeys['ArrowDown']) {
         uiManager.handleKeyPress('ArrowDown');
       }
-      
       if ((state.keys['w'] || state.keys['W']) && !(state.previousKeys['w'] || state.previousKeys['W'])) {
         uiManager.handleKeyPress('ArrowUp');
       }
-      
       if ((state.keys['s'] || state.keys['S']) && !(state.previousKeys['s'] || state.previousKeys['S'])) {
         uiManager.handleKeyPress('ArrowDown');
       }
@@ -119,13 +112,12 @@ export function createGame(canvas, ctx, state) { // This function creates the ma
         handleUIAction(uiAction);
       }
     }
-    
     // Store previous key states
     state.previousKeys = { ...state.keys };
   }
-  
+
   function handleUIAction(uiAction) {
-    console.log('UI Action:', uiAction);
+    console.log('UI Action:', uiAction); // Log UI action
     if (uiAction === 'startGame' || uiAction === 'restart') {
       // Reset game state - always go back to starting room
       state.inLevelOne = false;
@@ -138,16 +130,13 @@ export function createGame(canvas, ctx, state) { // This function creates the ma
       state.score = 0;
       state.playerHits = 0;
       state.invuln = 0;
-      
       // Clear everything
       clearEnemies();
       clearParticles();
       audioManager.stopAmbientMusic();
-  gameOverSoundPlayed = false; // Reset gate on restart
-      
+      gameOverSoundPlayed = false; // Reset gate on restart
       // Restore pickups for starting room (for both start game and restart)
       state.pickups = createInitialPickups();
-      
       gameState = 'playing';
       console.log('Game started, state:', gameState);
     } else if (uiAction === 'pause') {
@@ -166,34 +155,30 @@ export function createGame(canvas, ctx, state) { // This function creates the ma
   // --- Update phase logic ---
   function update() { // This function updates the game state every frame
     // Always update particles and screen shake
-    updateParticles();
-    updateScreenShake();
-    
+    updateParticles(); // Update all particles
+    updateScreenShake(); // Update screen shake effect
     // Handle UI input
-    handleInput();
-    
+    handleInput(); // Handle keyboard input
     // Update UI state based on game state
     if (gameState === 'menu') {
-      uiManager.setState(UI_STATES.MAIN_MENU);
+      uiManager.setState(UI_STATES.MAIN_MENU); // Set UI to main menu
       return;
     } else if (isPaused) {
-      uiManager.setState(UI_STATES.GAME_PAUSED);
+      uiManager.setState(UI_STATES.GAME_PAUSED); // Set UI to paused
       return;
     } else if (state.gameOver) {
-      uiManager.setState(UI_STATES.GAME_OVER);
-      audioManager.stopAmbientMusic();
+      uiManager.setState(UI_STATES.GAME_OVER); // Set UI to game over
+      audioManager.stopAmbientMusic(); // Stop music
       // Play game-over sound once when entering game over
       if (!gameOverSoundPlayed) {
-        playSound.gameOver();
+        playSound.gameOver(); // Play game over sound
         gameOverSoundPlayed = true;
       }
       return;
     } else {
-      uiManager.setState(UI_STATES.GAME_PLAYING);
+      uiManager.setState(UI_STATES.GAME_PLAYING); // Set UI to playing
     }
-    
     if (state.gameOver || isPaused || gameState === 'menu') return; // If the game is paused/over/menu, do nothing
-    
     // Only update player if actually playing the game
     if (gameState === 'playing') {
       updatePlayer(state.player, state.keys, state); // Update the player (movement, actions)
@@ -255,7 +240,6 @@ export function createGame(canvas, ctx, state) { // This function creates the ma
   function frame() { // This function is called every animation frame
     try {
       update(); // Update the game state
-      
       // Render based on current state
       if (gameState === 'menu' || isPaused || state.gameOver) {
         // Still render the game background if paused
@@ -268,9 +252,8 @@ export function createGame(canvas, ctx, state) { // This function creates the ma
         uiManager.render(ctx, canvas, state); // Draw game UI
       }
     } catch (error) {
-      console.error('Error in frame:', error);
+      console.error('Error in frame:', error); // Log any errors
     }
-    
     requestAnimationFrame(frame); // Call this function again next frame
   }
 

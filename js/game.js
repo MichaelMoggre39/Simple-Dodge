@@ -11,3 +11,4 @@
 //  - gameLoop.js (update & animation loop)
 //  - main.js (initialization / composition)
 // You can safely delete this file if you no longer need the note.
+// This file is just a reference and does not contain any executable code.

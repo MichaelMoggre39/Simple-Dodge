@@ -1,5 +1,6 @@
 
 // constants.js -- Fixed game configuration values
+// This file defines constant values used throughout the game.
 
 export const GAME_WIDTH = 1280;      // Logical width of the game world (before scaling)
 export const GAME_HEIGHT = 720;      // Logical height of the game world (before scaling)

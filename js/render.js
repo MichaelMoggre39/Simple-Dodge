@@ -9,11 +9,11 @@ import { renderParticles, getScreenShake, COLORS } from './particles.js'; // Imp
 
 // --- Helper: Calculate scale and offset for world-to-canvas transform ---
 function getWorldTransform(canvas) { // Calculates how to scale and center the game
-  const scaleX = canvas.width / GAME_WIDTH; // Horizontal scale
-  const scaleY = canvas.height / GAME_HEIGHT; // Vertical scale
-  const scale = Math.min(scaleX, scaleY); // Use the smaller scale
-  const offsetX = (canvas.width / scale - GAME_WIDTH) / 2; // Center horizontally
-  const offsetY = (canvas.height / scale - GAME_HEIGHT) / 2; // Center vertically
+  const scaleX = canvas.width / GAME_WIDTH; // Calculate horizontal scale
+  const scaleY = canvas.height / GAME_HEIGHT; // Calculate vertical scale
+  const scale = Math.min(scaleX, scaleY); // Use the smaller scale to fit the game
+  const offsetX = (canvas.width / scale - GAME_WIDTH) / 2; // Calculate horizontal offset for centering
+  const offsetY = (canvas.height / scale - GAME_HEIGHT) / 2; // Calculate vertical offset for centering
   return { scale, offsetX, offsetY }; // Return scale and offsets
 }
 

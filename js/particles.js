@@ -1,4 +1,5 @@
 // particles.js -- Visual effects and particle system
+// This file manages all particle effects, colors, and screen shake in the game.
 
 export const particles = []; // Array to store all active particles
 
@@ -14,206 +15,199 @@ export const COLORS = {
 
 // --- Particle Types ---
 export const PARTICLE_TYPES = {
-  EXPLOSION: 'explosion',
-  SPARK: 'spark',
-  TRAIL: 'trail',
-  PICKUP: 'pickup',
-  DAMAGE: 'damage',
-  HEALING: 'healing'
+  EXPLOSION: 'explosion', // Explosion effect
+  SPARK: 'spark',         // Spark effect
+  TRAIL: 'trail',         // Bullet trail
+  PICKUP: 'pickup',       // Pickup effect
+  DAMAGE: 'damage',       // Damage numbers
+  HEALING: 'healing'      // Healing effect (not used)
 };
 
 // --- Create different types of particle effects ---
 export function createExplosion(x, y, color = '#ff6600', count = 8) {
-  for (let i = 0; i < count; i++) {
-    const angle = (Math.PI * 2 * i) / count + Math.random() * 0.5;
-    const speed = 3 + Math.random() * 4;
+  for (let i = 0; i < count; i++) { // For each particle
+    const angle = (Math.PI * 2 * i) / count + Math.random() * 0.5; // Spread angle
+    const speed = 3 + Math.random() * 4; // Random speed
     particles.push({
-      type: PARTICLE_TYPES.EXPLOSION,
-      x: x,
-      y: y,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed,
-      life: 30,
-      maxLife: 30,
-      size: 4 + Math.random() * 4,
-      color: color,
-      alpha: 1.0
+      type: PARTICLE_TYPES.EXPLOSION, // Type of particle
+      x: x, // X position
+      y: y, // Y position
+      vx: Math.cos(angle) * speed, // X velocity
+      vy: Math.sin(angle) * speed, // Y velocity
+      life: 30, // Lifetime
+      maxLife: 30, // Max lifetime
+      size: 4 + Math.random() * 4, // Size
+      color: color, // Color
+      alpha: 1.0 // Opacity
     });
   }
 }
 
 export function createSparks(x, y, count = 5) {
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < count; i++) { // For each spark
     particles.push({
-      type: PARTICLE_TYPES.SPARK,
-      x: x + (Math.random() - 0.5) * 20,
-      y: y + (Math.random() - 0.5) * 20,
-      vx: (Math.random() - 0.5) * 6,
-      vy: (Math.random() - 0.5) * 6,
-      life: 20,
-      maxLife: 20,
-      size: 2 + Math.random() * 2,
-      color: '#ffff00',
-      alpha: 1.0
+      type: PARTICLE_TYPES.SPARK, // Type
+      x: x + (Math.random() - 0.5) * 20, // X position
+      y: y + (Math.random() - 0.5) * 20, // Y position
+      vx: (Math.random() - 0.5) * 6, // X velocity
+      vy: (Math.random() - 0.5) * 6, // Y velocity
+      life: 20, // Lifetime
+      maxLife: 20, // Max lifetime
+      size: 2 + Math.random() * 2, // Size
+      color: '#ffff00', // Color
+      alpha: 1.0 // Opacity
     });
   }
 }
 
 // Allow callers to pass specific spark colors
 export function createColoredSparks(x, y, color = '#ffff00', count = 5) {
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < count; i++) { // For each spark
     particles.push({
-      type: PARTICLE_TYPES.SPARK,
-      x: x + (Math.random() - 0.5) * 20,
-      y: y + (Math.random() - 0.5) * 20,
-      vx: (Math.random() - 0.5) * 6,
-      vy: (Math.random() - 0.5) * 6,
-      life: 20,
-      maxLife: 20,
-      size: 2 + Math.random() * 2,
-      color,
-      alpha: 1.0
+      type: PARTICLE_TYPES.SPARK, // Type
+      x: x + (Math.random() - 0.5) * 20, // X position
+      y: y + (Math.random() - 0.5) * 20, // Y position
+      vx: (Math.random() - 0.5) * 6, // X velocity
+      vy: (Math.random() - 0.5) * 6, // Y velocity
+      life: 20, // Lifetime
+      maxLife: 20, // Max lifetime
+      size: 2 + Math.random() * 2, // Size
+      color, // Color
+      alpha: 1.0 // Opacity
     });
   }
 }
 
 export function createTrail(x, y, vx, vy, color = COLORS.playerBullet) {
   particles.push({
-    type: PARTICLE_TYPES.TRAIL,
-    x: x,
-    y: y,
-    vx: vx * 0.1,
-    vy: vy * 0.1,
-    life: 15,
-    maxLife: 15,
-    size: 3,
-    color: color,
-    alpha: 0.8
+    type: PARTICLE_TYPES.TRAIL, // Type
+    x: x, // X position
+    y: y, // Y position
+    vx: vx * 0.1, // X velocity (slower than bullet)
+    vy: vy * 0.1, // Y velocity
+    life: 15, // Lifetime
+    maxLife: 15, // Max lifetime
+    size: 3, // Size
+    color: color, // Color
+    alpha: 0.8 // Opacity
   });
 }
 
 export function createPickupEffect(x, y, color = COLORS.pickup) {
-  for (let i = 0; i < 12; i++) {
-    const angle = (Math.PI * 2 * i) / 12;
-    const speed = 2 + Math.random() * 2;
+  for (let i = 0; i < 12; i++) { // For each pickup particle
+    const angle = (Math.PI * 2 * i) / 12; // Spread angle
+    const speed = 2 + Math.random() * 2; // Random speed
     particles.push({
-      type: PARTICLE_TYPES.PICKUP,
-      x: x,
-      y: y,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed,
-      life: 40,
-      maxLife: 40,
-      size: 3,
-      color: color,
-      alpha: 1.0
+      type: PARTICLE_TYPES.PICKUP, // Type
+      x: x, // X position
+      y: y, // Y position
+      vx: Math.cos(angle) * speed, // X velocity
+      vy: Math.sin(angle) * speed, // Y velocity
+      life: 40, // Lifetime
+      maxLife: 40, // Max lifetime
+      size: 3, // Size
+      color: color, // Color
+      alpha: 1.0 // Opacity
     });
   }
 }
 
 export function createDamageNumbers(x, y, damage) {
   particles.push({
-    type: PARTICLE_TYPES.DAMAGE,
-    x: x,
-    y: y,
-    vx: (Math.random() - 0.5) * 2,
-    vy: -3 - Math.random() * 2,
-    life: 60,
-    maxLife: 60,
-    size: 20,
-    text: damage.toString(),
-    color: COLORS.enemyDamage,
-    alpha: 1.0
+    type: PARTICLE_TYPES.DAMAGE, // Type
+    x: x, // X position
+    y: y, // Y position
+    vx: (Math.random() - 0.5) * 2, // X velocity
+    vy: -3 - Math.random() * 2, // Y velocity (upwards)
+    life: 60, // Lifetime
+    maxLife: 60, // Max lifetime
+    size: 20, // Font size
+    text: damage.toString(), // Damage text
+    color: COLORS.enemyDamage, // Color
+    alpha: 1.0 // Opacity
   });
 }
 
 // --- Update all particles ---
 export function updateParticles() {
-  for (let i = particles.length - 1; i >= 0; i--) {
-    const p = particles[i];
-    
+  for (let i = particles.length - 1; i >= 0; i--) { // Go through all particles backwards
+    const p = particles[i]; // Get the particle
     // Update position
-    p.x += p.vx;
-    p.y += p.vy;
-    
+    p.x += p.vx; // Move horizontally
+    p.y += p.vy; // Move vertically
     // Apply physics based on type
     if (p.type === PARTICLE_TYPES.EXPLOSION || p.type === PARTICLE_TYPES.SPARK) {
       p.vx *= 0.95; // Friction
-      p.vy *= 0.95;
+      p.vy *= 0.95; // Friction
       p.vy += 0.2; // Gravity
     } else if (p.type === PARTICLE_TYPES.TRAIL) {
-      p.vx *= 0.9;
-      p.vy *= 0.9;
+      p.vx *= 0.9; // Slow down
+      p.vy *= 0.9; // Slow down
     } else if (p.type === PARTICLE_TYPES.PICKUP) {
       p.vy += 0.1; // Light gravity
-      p.vx *= 0.98;
+      p.vx *= 0.98; // Slow down
     } else if (p.type === PARTICLE_TYPES.DAMAGE) {
       p.vy += 0.1; // Gravity for damage numbers
     }
-    
     // Update life and alpha
-    p.life--;
-    p.alpha = p.life / p.maxLife;
-    
+    p.life--; // Decrease life
+    p.alpha = p.life / p.maxLife; // Fade out
     // Remove dead particles
     if (p.life <= 0) {
-      particles.splice(i, 1);
+      particles.splice(i, 1); // Remove from array
     }
   }
 }
 
 // --- Render all particles ---
 export function renderParticles(ctx) {
-  ctx.save();
-  
-  for (const p of particles) {
-    ctx.globalAlpha = p.alpha;
-    
+  ctx.save(); // Save context state
+  for (const p of particles) { // For each particle
+    ctx.globalAlpha = p.alpha; // Set opacity
     if (p.type === PARTICLE_TYPES.DAMAGE) {
       // Render damage numbers
-      ctx.fillStyle = p.color;
-      ctx.font = `bold ${p.size}px Arial`;
-      ctx.textAlign = 'center';
-      ctx.fillText(p.text, p.x, p.y);
+      ctx.fillStyle = p.color; // Set color
+      ctx.font = `bold ${p.size}px Arial`; // Set font
+      ctx.textAlign = 'center'; // Center text
+      ctx.fillText(p.text, p.x, p.y); // Draw text
     } else {
       // Render particle dots
-      ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.fillStyle = p.color; // Set color
+      ctx.beginPath(); // Start drawing
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); // Draw circle
+      ctx.fill(); // Fill circle
     }
   }
-  
-  ctx.restore();
+  ctx.restore(); // Restore context state
 }
 
 // --- Screen shake effect ---
-let screenShake = { x: 0, y: 0, intensity: 0, duration: 0 };
+let screenShake = { x: 0, y: 0, intensity: 0, duration: 0 }; // Object to track screen shake
 
 export function addScreenShake(intensity = 5, duration = 10) {
-  screenShake.intensity = Math.max(screenShake.intensity, intensity);
-  screenShake.duration = Math.max(screenShake.duration, duration);
+  screenShake.intensity = Math.max(screenShake.intensity, intensity); // Set intensity
+  screenShake.duration = Math.max(screenShake.duration, duration); // Set duration
 }
 
 export function updateScreenShake() {
   if (screenShake.duration > 0) {
-    screenShake.x = (Math.random() - 0.5) * screenShake.intensity;
-    screenShake.y = (Math.random() - 0.5) * screenShake.intensity;
-    screenShake.duration--;
+    screenShake.x = (Math.random() - 0.5) * screenShake.intensity; // Random x offset
+    screenShake.y = (Math.random() - 0.5) * screenShake.intensity; // Random y offset
+    screenShake.duration--; // Decrease duration
     screenShake.intensity *= 0.9; // Fade out
   } else {
-    screenShake.x = 0;
-    screenShake.y = 0;
-    screenShake.intensity = 0;
+    screenShake.x = 0; // Reset x
+    screenShake.y = 0; // Reset y
+    screenShake.intensity = 0; // Reset intensity
   }
 }
 
 export function getScreenShake() {
-  return { x: screenShake.x, y: screenShake.y };
+  return { x: screenShake.x, y: screenShake.y }; // Return current shake
 }
 
 // --- Clear all particles (for level transitions) ---
 export function clearParticles() {
-  particles.length = 0;
-  screenShake = { x: 0, y: 0, intensity: 0, duration: 0 };
+  particles.length = 0; // Remove all particles
+  screenShake = { x: 0, y: 0, intensity: 0, duration: 0 }; // Reset screen shake
 }
