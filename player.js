@@ -51,8 +51,8 @@ export function updatePlayer(player, keys) {
 
 // --- Helper: Circle dash mechanic ---
 function handleCircleDash(player, keys) {
-  // Initiate dash if Shift is pressed and not on cooldown
-  if (keys['Shift'] && player.dashCooldown === 0 && player.dashTime === 0) {
+  // Initiate dash if left click (shooting) and not on cooldown
+  if (player.shooting && player.dashCooldown === 0 && player.dashTime === 0) {
     player.dashTime = 10; // Dash lasts 10 frames
     player.dashCooldown = 40; // Cooldown (e.g. 40 frames)
     // Store dash direction based on input

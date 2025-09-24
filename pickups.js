@@ -3,22 +3,41 @@
 
 // --- Create the starting set of pickups ---
 export function createInitialPickups() {
+  // Arrange pickups in a horizontal row near the top
+  const pickupY = 100;
+  const pickupSpacing = 200;
+  const pickupSize = 30;
+  const startX = 340;
   return [
-    { x: 200, y: 150, size: 30, type: 'circle' },   // Circle form pickup
-    { x: 600, y: 500, size: 30, type: 'triangle' },  // Triangle form pickup
-    { x: 1000, y: 300, size: 30, type: 'star' }      // Star form pickup
+    { x: startX, y: pickupY, size: pickupSize, type: 'circle' },
+    { x: startX + pickupSpacing, y: pickupY, size: pickupSize, type: 'triangle' },
+    { x: startX + 2 * pickupSpacing, y: pickupY, size: pickupSize, type: 'star' },
+    // Portal on the right side, vertically centered
+    { x: 1200, y: 335, size: 50, type: 'portal' }
   ];
 }
 
 // --- Detect and handle collisions between player and pickups ---
 export function checkPickupCollisions(player, pickups) {
+  // Only allow transform change if player confirms
+  if (!player.confirmingTransform) player.confirmingTransform = null;
+  let hovering = false;
   for (let i = pickups.length - 1; i >= 0; i--) {
     const p = pickups[i];
-    if (isColliding(player.x, player.y, player.size, p.x, p.y, p.size)) {
-      player.currentShape = p.type; // Change the player's shape to pickup type
-      // Pickup is not removed, so player can swap forms freely
+    if (p.type !== 'portal' && isColliding(player.x, player.y, player.size, p.x, p.y, p.size)) {
+      hovering = true;
+      // If player presses Space, confirm transform
+      if (player.keys && (player.keys[' '] || player.keys['Space'])) {
+        if (player.confirmingTransform !== p.type) {
+          player.currentShape = p.type;
+          player.confirmingTransform = p.type;
+        }
+      }
+      break;
     }
   }
+  // Reset confirmingTransform if not hovering any pickup
+  if (!hovering) player.confirmingTransform = null;
 }
 
 // --- Helper: Axis-aligned bounding box overlap test ---
