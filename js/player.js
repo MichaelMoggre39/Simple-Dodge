@@ -3,6 +3,8 @@
 
 import { GAME_WIDTH, GAME_HEIGHT, PLAYER_SIZE, PLAYER_SPEED } from './constants.js'; // Import constants for game size and player
 import { shootBullet } from './bullets.js'; // Import function to shoot bullets
+import { createTrail } from './particles.js'; // Import particle effects
+import { playSound } from './audio.js'; // Import sound effects
 
 // --- Factory: Create a new player object ---
 export function createPlayer() { // This function creates a new player object
@@ -56,6 +58,10 @@ function handleCircleDash(player, keys) { // Handles dashing for circle form
   if (player.shooting && player.dashCooldown === 0 && player.dashTime === 0) {
     player.dashTime = 10; // Dash lasts 10 frames
     player.dashCooldown = 40; // Cooldown (e.g. 40 frames)
+    
+    // Play dash sound
+    playSound.dash();
+    
     // Store dash direction based on mouse aim
     const centerX = player.x + player.size / 2; // Find the center x of the player
     const centerY = player.y + player.size / 2; // Find the center y of the player
@@ -75,6 +81,15 @@ function handleCircleDash(player, keys) { // Handles dashing for circle form
     const dashSpeed = 18; // Dash speed
     player.x += player.dashDX * dashSpeed; // Move in dash direction
     player.y += player.dashDY * dashSpeed;
+    
+    // Create dash trail particles
+    createTrail(
+      player.x + player.size / 2 - player.dashDX * 20,
+      player.y + player.size / 2 - player.dashDY * 20,
+      -player.dashDX * 5,
+      -player.dashDY * 5,
+      '#ff4444'
+    );
   } else {
     // Normal movement if not dashing
     handleDefaultMovement(player, keys); // Use normal movement
@@ -87,21 +102,29 @@ function handleStarSpin(player, keys, state) { // Handles spinning for star form
   if (!player._spinReady && !player.shooting) {
     player._spinReady = true; // Ready to spin again after mouse released
   }
+  // Use left-click for star spin
   if (player.shooting && !player.spinning && player._spinReady && (!state || !state.starSpinCooldown || state.starSpinCooldown <= 0)) {
     player.spinTime = 15; // Spin lasts 15 frames
     player.spinning = true; // Start spinning
     player._spinReady = false; // Can't spin again until mouse released
     if (state) state.starSpinCooldown = 30; // 0.5 second cooldown (reduced)
+    
+    // Play spin sound
+    playSound.spin();
   }
   handleDefaultMovement(player, keys); // Use normal movement while spinning
 }
 
 // --- Helper: Default movement for all forms ---
 function handleDefaultMovement(player, keys) { // Handles normal movement
-  if (keys['ArrowUp'] || keys['w'] || keys['W']) player.y -= player.speed; // Move up
-  if (keys['ArrowDown'] || keys['s'] || keys['S']) player.y += player.speed; // Move down
-  if (keys['ArrowLeft'] || keys['a'] || keys['A']) player.x -= player.speed; // Move left
-  if (keys['ArrowRight'] || keys['d'] || keys['D']) player.x += player.speed; // Move right
+  // Only move if we have valid key states and they're currently pressed
+  if (keys && typeof keys === 'object') {
+    // Only respond to specific movement keys, ignore all others
+    if (keys['w'] || keys['W']) player.y -= player.speed; // Move up
+    if (keys['s'] || keys['S']) player.y += player.speed; // Move down
+    if (keys['a'] || keys['A']) player.x -= player.speed; // Move left
+    if (keys['d'] || keys['D']) player.x += player.speed; // Move right
+  }
 }
 
 // --- Helper: Triangle aiming and shooting ---
@@ -123,6 +146,9 @@ function handleTriangleAimingAndShooting(player) { // Handles aiming and shootin
     const vy = Math.sin(player.aimAngle) * bulletSpeed; // Bullet velocity y
     shootBullet(tipX, tipY, vx, vy); // Shoot the bullet
     player.canShoot = false; // Prevent holding down mouse to shoot rapidly
+    
+    // Play shoot sound
+    playSound.shoot();
   }
 }
 

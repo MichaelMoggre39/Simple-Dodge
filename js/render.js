@@ -5,6 +5,7 @@ import { GAME_WIDTH, GAME_HEIGHT } from './constants.js'; // Import logical worl
 import { drawStar } from './shapes.js'; // Import helper for star shape
 import { bullets } from './bullets.js'; // Import bullets array
 import { enemies } from './enemies.js'; // Import enemies array
+import { renderParticles, getScreenShake, COLORS } from './particles.js'; // Import particle system and shared colors
 
 // --- Helper: Calculate scale and offset for world-to-canvas transform ---
 function getWorldTransform(canvas) { // Calculates how to scale and center the game
@@ -52,10 +53,13 @@ export function render(ctx, canvas, gameState) { // Draws everything on the scre
   ctx.fillRect(0, 0, offsetX * scale, canvas.height); // Left bar
   ctx.fillRect(canvas.width - offsetX * scale, 0, offsetX * scale, canvas.height); // Right bar
 
-  // --- Apply world transform ---
+  // --- Apply world transform with screen shake ---
   ctx.save(); // Save current state
   ctx.scale(scale, scale); // Scale drawing
-  ctx.translate(offsetX, offsetY); // Move drawing
+  
+  // Apply screen shake
+  const shake = getScreenShake();
+  ctx.translate(offsetX + shake.x, offsetY + shake.y); // Move drawing with shake
 
   // --- Draw game area border ---
   ctx.strokeStyle = 'black'; // Border color
@@ -296,44 +300,115 @@ function wrapTextLines(ctx, text, maxWidth) { // Splits text into lines that fit
   }
 
   // --- Draw all bullets ---
-  ctx.fillStyle = 'lime'; // Bullet color
   for (const b of bullets) { // For each bullet
+    ctx.fillStyle = b.color || 'lime'; // Bullet color from bullet data
     ctx.beginPath();
     ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2); // Draw bullet
     ctx.fill();
   }
 
-  // --- Draw all enemies as small squares (level one)
-  ctx.fillStyle = '#a020f0'; // Enemy color (purple)
+  // --- Draw all enemies as stylized squares (level one)
   for (const enemy of enemies) { // For each enemy
-    ctx.fillRect(enemy.x, enemy.y, enemy.size, enemy.size); // Draw enemy
+    ctx.save();
+    const ex = enemy.x;
+    const ey = enemy.y;
+    const es = enemy.size;
+    const cx = ex + es / 2;
+    const cy = ey + es / 2;
+    // Subtle glow
+    ctx.shadowColor = COLORS.enemyDamage + 'aa';
+    ctx.shadowBlur = 12;
+    // Vertical purple gradient
+    const grad = ctx.createLinearGradient(ex, ey, ex, ey + es);
+    grad.addColorStop(0, '#d1c4e9');
+    grad.addColorStop(0.6, '#b39ddb');
+    grad.addColorStop(1, COLORS.enemyDamage);
+    ctx.fillStyle = grad;
+    ctx.fillRect(ex, ey, es, es);
+    // Outline
+    ctx.shadowBlur = 0;
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#ffffff';
+    ctx.strokeRect(ex, ey, es, es);
+    ctx.restore();
   }
+
+  // --- Draw all particles ---
+  renderParticles(ctx); // Draw particle effects
 
   ctx.restore(); // Restore to pre-transform state
 }
 
 // --- Helper: Draw the player in its current shape ---
 function drawPlayer(ctx, player) { // Draws the player based on its shape
-  ctx.fillStyle = 'red'; // Player color
-  ctx.beginPath();
-  if (player.currentShape === 'square') { // If square
-    // Draw a filled square
-    ctx.fillRect(player.x, player.y, player.size, player.size); // Draw square
-  } else if (player.currentShape === 'circle') { // If circle
-    // Draw a filled circle
-    ctx.arc(player.x + player.size / 2, player.y + player.size / 2, player.size / 2, 0, Math.PI * 2); // Draw circle
+  if (player.currentShape === 'square') { // Base form: white square
+    ctx.save();
+    // Subtle white glow
+    ctx.shadowColor = '#ffffff55';
+    ctx.shadowBlur = 8;
+    // Vertical white-to-light-gray gradient
+    const grad = ctx.createLinearGradient(player.x, player.y, player.x, player.y + player.size);
+    grad.addColorStop(0, '#ffffff');
+    grad.addColorStop(1, '#e0e0e0');
+    ctx.fillStyle = grad;
+    ctx.fillRect(player.x, player.y, player.size, player.size);
+    // Outline
+    ctx.shadowBlur = 0; // No glow on outline for crispness
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#bdbdbd';
+    ctx.strokeRect(player.x, player.y, player.size, player.size);
+    ctx.restore();
+  } else if (player.currentShape === 'circle') { // Dash form: red circle
+    ctx.save();
+    const cx = player.x + player.size / 2;
+    const cy = player.y + player.size / 2;
+    const r = player.size / 2;
+    // Dash glow when active
+    if (player.dashTime > 0) {
+      ctx.shadowColor = COLORS.dashKill;
+      ctx.shadowBlur = 25;
+    }
+    // Red radial gradient
+    const grad = ctx.createRadialGradient(cx, cy, r * 0.2, cx, cy, r);
+    grad.addColorStop(0, '#ff8a80');
+    grad.addColorStop(0.6, '#ff5252');
+    grad.addColorStop(1, '#e53935');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.fill();
-  } else if (player.currentShape === 'triangle') { // If triangle
-    // Draw a triangle pointing in aim direction
+    // White outline
+    ctx.shadowBlur = 0;
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#ffffff';
+    ctx.stroke();
+    ctx.restore();
+  } else if (player.currentShape === 'triangle') { // Shooter form: green triangle
     ctx.save();
     ctx.translate(player.x + player.size / 2, player.y + player.size / 2); // Move to center
     ctx.rotate(player.aimAngle || 0); // Rotate to aim
+    // Shooting glow
+    if (player.shooting) {
+      ctx.shadowColor = COLORS.playerBullet;
+      ctx.shadowBlur = 18;
+    }
+    // Green gradient from back to tip
+    const grad = ctx.createLinearGradient(-player.size / 2, 0, player.size / 2, 0);
+    grad.addColorStop(0, '#b9f6ca');
+    grad.addColorStop(0.6, '#00e676');
+    grad.addColorStop(1, '#00c853');
+    ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.moveTo(player.size / 2, 0); // Tip (front)
     ctx.lineTo(-player.size / 2, -player.size / 2); // Back left
     ctx.lineTo(-player.size / 2, player.size / 2); // Back right
     ctx.closePath();
     ctx.fill();
+    // White outline
+    ctx.shadowBlur = 0;
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#ffffff';
+    ctx.stroke();
     ctx.restore();
   } else if (player.currentShape === 'star') { // If star
     // Draw a spinning star
@@ -343,10 +418,25 @@ function drawPlayer(ctx, player) { // Draws the player based on its shape
     if (player.spinning && player.spinTime > 0) { // If spinning
       // Spin angle based on remaining spinTime (full spin in 15 frames)
       spinAngle = (2 * Math.PI) * (1 - player.spinTime / 15); // Calculate angle
+      // Add a subtle glow while spinning
+      ctx.shadowColor = COLORS.starKill;
+      ctx.shadowBlur = 25;
     }
     ctx.rotate(spinAngle); // Rotate
-    drawStar(ctx, 0, 0, 5, player.size / 2, player.size / 4); // Draw star
+    // Golden gradient fill for star
+    const outerR = player.size / 2;
+    const innerR = player.size / 6;
+    const grad = ctx.createRadialGradient(0, 0, innerR, 0, 0, outerR);
+    grad.addColorStop(0, '#fff59d'); // light yellow
+    grad.addColorStop(0.6, '#ffeb3b'); // rich yellow
+    grad.addColorStop(1, '#fbc02d'); // golden
+    ctx.fillStyle = grad;
+    drawStar(ctx, 0, 0, 5, outerR, player.size / 4); // Draw star
     ctx.fill();
+    // White outline to make the star pop
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#ffffff';
+    ctx.stroke();
     ctx.restore();
   }
 }

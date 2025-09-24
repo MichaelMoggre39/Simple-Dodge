@@ -1,6 +1,9 @@
 
 // pickups.js -- Handles creation and collision of transformation pickups
 
+import { createPickupEffect } from './particles.js'; // Import particle effects
+import { playSound } from './audio.js'; // Import sound effects
+
 // --- Create the starting set of pickups ---
 export function createInitialPickups() { // This function creates the starting pickups
   // Arrange pickups in a horizontal row near the top
@@ -29,6 +32,10 @@ export function checkPickupCollisions(player, pickups) { // This function checks
       // If player presses Space, confirm transform
       if (player.keys && (player.keys[' '] || player.keys['Space'])) { // If space is pressed
         if (player.confirmingTransform !== p.type) { // If not already confirming
+          // Visual and audio effects at player position
+          createPickupEffect(player.x + player.size / 2, player.y + player.size / 2, '#ffd700');
+          playSound.pickup();
+          
           player.currentShape = p.type; // Change player shape
           player.confirmingTransform = p.type; // Mark as confirming
         }
