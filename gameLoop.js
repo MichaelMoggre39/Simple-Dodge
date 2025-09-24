@@ -1,19 +1,21 @@
-// gameLoop.js
-import { updatePlayer } from './player.js';
-import { checkPickupCollisions } from './pickups.js';
-import { render } from './render.js';
+// gameLoop.js                                                        // Orchestrates update & render each animation frame
+import { updatePlayer } from './player.js';                           // Player movement logic
+import { checkPickupCollisions } from './pickups.js';                 // Pickup collision checks
+import { render } from './render.js';                                 // Rendering function
 
-export function createGame(canvas, ctx, state) {
-  function update() {
-    updatePlayer(state.player, state.keys);
-    checkPickupCollisions(state.player, state.pickups);
-  }
+export function createGame(canvas, ctx, state) {                      // Factory to build a game controller
+  function update() {                                                 // Update phase logic
+    updatePlayer(state.player, state.keys);                           // Move player based on current keys
+    checkPickupCollisions(state.player, state.pickups);               // Apply collisions & shape changes
+  }                                                                   // End update
 
-  function frame() {
-    update();
-    render(ctx, canvas, state);
-    requestAnimationFrame(frame);
-  }
+  function frame() {                                                  // Single animation frame callback
+    update();                                                         // Run game state updates
+    render(ctx, canvas, state);                                       // Draw the current frame
+    requestAnimationFrame(frame);                                     // Schedule the next frame
+  }                                                                   // End frame
 
-  return { start: () => requestAnimationFrame(frame) };
-}
+  return {                                                            // Public API of game controller
+    start: () => requestAnimationFrame(frame)                         // Begin the animation loop when called
+  };                                                                  // End returned object
+}                                                                     // End createGame
