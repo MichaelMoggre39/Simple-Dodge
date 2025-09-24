@@ -1,26 +1,26 @@
-// render.js                                                             // Handles drawing the entire frame
 
-import { GAME_WIDTH, GAME_HEIGHT } from './constants.js';               // Import logical world dimensions
-import { drawStar } from './shapes.js';                                 // Import helper for star shape
-import { bullets } from './bullets.js';                                 // Import bullets array
-import { enemies } from './enemies.js';                                 // Import enemies array
+// render.js -- Handles drawing the entire frame
+
+import { GAME_WIDTH, GAME_HEIGHT } from './constants.js'; // Import logical world dimensions
+import { drawStar } from './shapes.js'; // Import helper for star shape
+import { bullets } from './bullets.js'; // Import bullets array
+import { enemies } from './enemies.js'; // Import enemies array
 
 // --- Helper: Calculate scale and offset for world-to-canvas transform ---
-function getWorldTransform(canvas) {
-  const scaleX = canvas.width / GAME_WIDTH;
-  const scaleY = canvas.height / GAME_HEIGHT;
-  const scale = Math.min(scaleX, scaleY);
-  const offsetX = (canvas.width / scale - GAME_WIDTH) / 2;
-  const offsetY = (canvas.height / scale - GAME_HEIGHT) / 2;
-  return { scale, offsetX, offsetY };
+function getWorldTransform(canvas) { // Calculates how to scale and center the game
+  const scaleX = canvas.width / GAME_WIDTH; // Horizontal scale
+  const scaleY = canvas.height / GAME_HEIGHT; // Vertical scale
+  const scale = Math.min(scaleX, scaleY); // Use the smaller scale
+  const offsetX = (canvas.width / scale - GAME_WIDTH) / 2; // Center horizontally
+  const offsetY = (canvas.height / scale - GAME_HEIGHT) / 2; // Center vertically
+  return { scale, offsetX, offsetY }; // Return scale and offsets
 }
 
-
-export function render(ctx, canvas, gameState) {
+export function render(ctx, canvas, gameState) { // Draws everything on the screen
   // --- Detect if player is over a pickup ---
-  let hoveredPickup = null;
-  for (const p of gameState.pickups) {
-    if (p.type !== 'portal') {
+  let hoveredPickup = null; // Track if player is over a pickup
+  for (const p of gameState.pickups) { // For each pickup
+    if (p.type !== 'portal') { // Ignore portal
       // Simple AABB collision
       if (
         gameState.player.x < p.x + p.size &&
@@ -28,93 +28,93 @@ export function render(ctx, canvas, gameState) {
         gameState.player.y < p.y + p.size &&
         gameState.player.y + gameState.player.size > p.y
       ) {
-        hoveredPickup = p;
+        hoveredPickup = p; // Player is over this pickup
         break;
       }
     }
   }
   // --- Clear previous frame ---
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the whole canvas
 
   // --- Draw background gradient ---
-  const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-  gradient.addColorStop(1, '#2a5298');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height); // Create a gradient
+  gradient.addColorStop(1, '#2a5298'); // Set color
+  ctx.fillStyle = gradient; // Use gradient as fill
+  ctx.fillRect(0, 0, canvas.width, canvas.height); // Fill the background
 
   // --- Calculate world transform (scaling and letterboxing) ---
-  const { scale, offsetX, offsetY } = getWorldTransform(canvas);
+  const { scale, offsetX, offsetY } = getWorldTransform(canvas); // Get scale and offsets
 
   // --- Draw letterbox bars (outside game area) ---
-  ctx.fillStyle = 'rgba(0,0,0,0.3)';
-  ctx.fillRect(0, 0, canvas.width, offsetY * scale); // Top
-  ctx.fillRect(0, canvas.height - offsetY * scale, canvas.width, offsetY * scale); // Bottom
-  ctx.fillRect(0, 0, offsetX * scale, canvas.height); // Left
-  ctx.fillRect(canvas.width - offsetX * scale, 0, offsetX * scale, canvas.height); // Right
+  ctx.fillStyle = 'rgba(0,0,0,0.3)'; // Set color for bars
+  ctx.fillRect(0, 0, canvas.width, offsetY * scale); // Top bar
+  ctx.fillRect(0, canvas.height - offsetY * scale, canvas.width, offsetY * scale); // Bottom bar
+  ctx.fillRect(0, 0, offsetX * scale, canvas.height); // Left bar
+  ctx.fillRect(canvas.width - offsetX * scale, 0, offsetX * scale, canvas.height); // Right bar
 
   // --- Apply world transform ---
-  ctx.save();
-  ctx.scale(scale, scale);
-  ctx.translate(offsetX, offsetY);
+  ctx.save(); // Save current state
+  ctx.scale(scale, scale); // Scale drawing
+  ctx.translate(offsetX, offsetY); // Move drawing
 
   // --- Draw game area border ---
-  ctx.strokeStyle = 'black';
-  ctx.lineWidth = 1;
-  ctx.strokeRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+  ctx.strokeStyle = 'black'; // Border color
+  ctx.lineWidth = 1; // Border width
+  ctx.strokeRect(0, 0, GAME_WIDTH, GAME_HEIGHT); // Draw border
 
   // --- Draw pickups and portal ---
-  for (const p of gameState.pickups) {
-    if (p.type === 'portal') {
+  for (const p of gameState.pickups) { // For each pickup
+    if (p.type === 'portal') { // If it's a portal
       // Draw portal as a glowing blue square
       ctx.save();
-      ctx.shadowColor = '#00f6ff';
-      ctx.shadowBlur = 20;
-      ctx.fillStyle = '#00bfff';
-      ctx.fillRect(p.x, p.y, p.size, p.size);
+      ctx.shadowColor = '#00f6ff'; // Glow color
+      ctx.shadowBlur = 20; // Glow size
+      ctx.fillStyle = '#00bfff'; // Fill color
+      ctx.fillRect(p.x, p.y, p.size, p.size); // Draw portal
       ctx.restore();
       // Optionally, draw a label
       ctx.save();
-      ctx.fillStyle = 'white';
-      ctx.font = '20px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText('START', p.x + p.size / 2, p.y + p.size + 22);
+      ctx.fillStyle = 'white'; // Text color
+      ctx.font = '20px Arial'; // Font
+      ctx.textAlign = 'center'; // Center text
+      ctx.fillText('START', p.x + p.size / 2, p.y + p.size + 22); // Draw label
       ctx.restore();
-    } else if (p.type === 'circle') {
+    } else if (p.type === 'circle') { // If it's a circle pickup
       // Gold circle
       ctx.save();
-      ctx.fillStyle = 'gold';
+      ctx.fillStyle = 'gold'; // Fill color
       ctx.beginPath();
-      ctx.arc(p.x + p.size / 2, p.y + p.size / 2, p.size / 2, 0, Math.PI * 2);
+      ctx.arc(p.x + p.size / 2, p.y + p.size / 2, p.size / 2, 0, Math.PI * 2); // Draw circle
       ctx.fill();
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2; // Border width
+      ctx.strokeStyle = '#fff'; // Border color
       ctx.stroke();
       ctx.restore();
-    } else if (p.type === 'triangle') {
+    } else if (p.type === 'triangle') { // If it's a triangle pickup
       // Gold triangle
       ctx.save();
-      ctx.fillStyle = 'gold';
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 2;
+      ctx.fillStyle = 'gold'; // Fill color
+      ctx.strokeStyle = '#fff'; // Border color
+      ctx.lineWidth = 2; // Border width
       ctx.beginPath();
-      const cx = p.x + p.size / 2, cy = p.y + p.size / 2, r = p.size / 2;
-      for (let i = 0; i < 3; i++) {
-        const angle = Math.PI / 2 + i * (2 * Math.PI / 3);
-        const x = cx + Math.cos(angle) * r;
-        const y = cy + Math.sin(angle) * r;
-        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      const cx = p.x + p.size / 2, cy = p.y + p.size / 2, r = p.size / 2; // Center and radius
+      for (let i = 0; i < 3; i++) { // Draw triangle
+        const angle = Math.PI / 2 + i * (2 * Math.PI / 3); // Angle for each point
+        const x = cx + Math.cos(angle) * r; // X position
+        const y = cy + Math.sin(angle) * r; // Y position
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); // Move or draw line
       }
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
       ctx.restore();
-    } else if (p.type === 'star') {
+    } else if (p.type === 'star') { // If it's a star pickup
       // Gold star
       ctx.save();
-      ctx.fillStyle = 'gold';
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 2;
-      drawStar(ctx, p.x + p.size / 2, p.y + p.size / 2, 5, p.size / 2, p.size / 4);
+      ctx.fillStyle = 'gold'; // Fill color
+      ctx.strokeStyle = '#fff'; // Border color
+      ctx.lineWidth = 2; // Border width
+      drawStar(ctx, p.x + p.size / 2, p.y + p.size / 2, 5, p.size / 2, p.size / 4); // Draw star
       ctx.fill();
       ctx.stroke();
       ctx.restore();
@@ -122,7 +122,7 @@ export function render(ctx, canvas, gameState) {
   }
 
   // --- Draw info box if hovering a pickup ---
-  if (hoveredPickup) {
+  if (hoveredPickup) { // If player is over a pickup
     let info = '';
     if (hoveredPickup.type === 'circle') {
       info = 'Circle: Dash with Left Click. Fast movement burst.';
@@ -133,201 +133,201 @@ export function render(ctx, canvas, gameState) {
     }
     // Draw info box higher above the pickup
     ctx.save();
-    ctx.globalAlpha = 0.95;
-    ctx.fillStyle = '#222';
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 2;
-  const boxWidth = 380;
-  // Use smaller font for info text
-  ctx.font = '20px Arial';
-  const infoLineHeight = 26;
-  const promptPadding = 18;
-  const promptHeight = 24;
-  const lines = wrapTextLines(ctx, info, boxWidth - 30);
-  const boxHeight = 32 + lines.length * infoLineHeight + promptPadding + promptHeight + 16; // 32 top pad, 16 bottom pad
+    ctx.globalAlpha = 0.95; // Slightly transparent
+    ctx.fillStyle = '#222'; // Box color
+    ctx.strokeStyle = '#fff'; // Border color
+    ctx.lineWidth = 2; // Border width
+    const boxWidth = 380; // Width of info box
+    // Use smaller font for info text
+    ctx.font = '20px Arial'; // Font
+    const infoLineHeight = 26; // Line height
+    const promptPadding = 18; // Padding for prompt
+    const promptHeight = 24; // Height for prompt
+    const lines = wrapTextLines(ctx, info, boxWidth - 30); // Split info into lines
+    const boxHeight = 32 + lines.length * infoLineHeight + promptPadding + promptHeight + 16; // Total height
     // Calculate world transform for clamping
     const { scale, offsetX, offsetY } = (typeof getWorldTransform === 'function') ? getWorldTransform(canvas) : { scale: 1, offsetX: 0, offsetY: 0 };
-    let boxX = hoveredPickup.x + hoveredPickup.size / 2 - boxWidth / 2;
+    let boxX = hoveredPickup.x + hoveredPickup.size / 2 - boxWidth / 2; // Center box
     // Clamp boxX to stay within world bounds
-    boxX = Math.max(0, Math.min(boxX, GAME_WIDTH - boxWidth));
+    boxX = Math.max(0, Math.min(boxX, GAME_WIDTH - boxWidth)); // Keep inside game area
     // Add more vertical space between box and pickup
-    const boxY = Math.max(10, hoveredPickup.y - boxHeight - 60); // 60px gap
-    ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
-    ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
-    ctx.fillStyle = '#fff';
-    ctx.font = '20px Arial';
-    ctx.textAlign = 'center';
-    const centerX = boxX + boxWidth / 2;
+    const boxY = Math.max(10, hoveredPickup.y - boxHeight - 60); // Place above pickup
+    ctx.fillRect(boxX, boxY, boxWidth, boxHeight); // Draw box
+    ctx.strokeRect(boxX, boxY, boxWidth, boxHeight); // Draw border
+    ctx.fillStyle = '#fff'; // Text color
+    ctx.font = '20px Arial'; // Font
+    ctx.textAlign = 'center'; // Center text
+    const centerX = boxX + boxWidth / 2; // Center x
     // Draw info text lines (smaller font, wrapped)
     lines.forEach((line, i) => {
-      ctx.fillText(line, centerX, boxY + 40 + i * infoLineHeight);
+      ctx.fillText(line, centerX, boxY + 40 + i * infoLineHeight); // Draw each line
     });
     // Draw prompt with extra padding below info text
-    ctx.font = '20px Arial';
-    ctx.fillStyle = '#0ff';
-    ctx.fillText('Press SPACE to confirm this transform', centerX, boxY + 40 + lines.length * infoLineHeight + promptPadding);
+    ctx.font = '20px Arial'; // Font
+    ctx.fillStyle = '#0ff'; // Prompt color
+    ctx.fillText('Press SPACE to confirm this transform', centerX, boxY + 40 + lines.length * infoLineHeight + promptPadding); // Draw prompt
     ctx.restore();
   }
 
 // --- Helper: Word wrap for info box ---
-function wrapTextLines(ctx, text, maxWidth) {
-  const words = text.split(' ');
-  const lines = [];
-  let line = '';
-  for (let n = 0; n < words.length; n++) {
-    const testLine = line + words[n] + ' ';
-    const metrics = ctx.measureText(testLine);
-    if (metrics.width > maxWidth && n > 0) {
-      lines.push(line.trim());
-      line = words[n] + ' ';
+function wrapTextLines(ctx, text, maxWidth) { // Splits text into lines that fit the box
+  const words = text.split(' '); // Split into words
+  const lines = []; // Array of lines
+  let line = ''; // Current line
+  for (let n = 0; n < words.length; n++) { // For each word
+    const testLine = line + words[n] + ' '; // Try adding word
+    const metrics = ctx.measureText(testLine); // Measure width
+    if (metrics.width > maxWidth && n > 0) { // If too wide
+      lines.push(line.trim()); // Add current line
+      line = words[n] + ' '; // Start new line
     } else {
-      line = testLine;
+      line = testLine; // Add word to line
     }
   }
-  lines.push(line.trim());
-  return lines;
+  lines.push(line.trim()); // Add last line
+  return lines; // Return array of lines
 }
 
   // --- Draw player (supports multiple shapes) ---
-  drawPlayer(ctx, gameState.player);
+  drawPlayer(ctx, gameState.player); // Draw the player
 
   // --- Draw player health and score (level one) ---
-  if (gameState.inLevelOne) {
+  if (gameState.inLevelOne) { // If in level one
     ctx.save();
-    ctx.font = '28px Arial';
-    ctx.fillStyle = '#fff';
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 4;
-    const health = (gameState.maxHits || 3) - (gameState.playerHits || 0);
-    const text = `Health: ${health}`;
-    ctx.strokeText(text, 30, 50);
-    ctx.fillText(text, 30, 50);
+    ctx.font = '28px Arial'; // Font
+    ctx.fillStyle = '#fff'; // Text color
+    ctx.strokeStyle = '#000'; // Border color
+    ctx.lineWidth = 4; // Border width
+    const health = (gameState.maxHits || 3) - (gameState.playerHits || 0); // Calculate health
+    const text = `Health: ${health}`; // Health text
+    ctx.strokeText(text, 30, 50); // Draw border
+    ctx.fillText(text, 30, 50); // Draw text
     // Draw score top right
-    const score = gameState.score || 0;
-    const scoreText = `Score: ${score}`;
-    ctx.strokeText(scoreText, GAME_WIDTH - 200, 50);
-    ctx.fillText(scoreText, GAME_WIDTH - 200, 50);
+    const score = gameState.score || 0; // Get score
+    const scoreText = `Score: ${score}`; // Score text
+    ctx.strokeText(scoreText, GAME_WIDTH - 200, 50); // Draw border
+    ctx.fillText(scoreText, GAME_WIDTH - 200, 50); // Draw text
     ctx.restore();
   }
 
   // --- Draw notification if player tries to enter portal as square ---
-  if (gameState.showPowerupNotification) {
-  ctx.save();
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.globalAlpha = 0.92;
-  ctx.font = 'bold 32px Arial';
-  const notifText = 'Pick a powerup before entering the portal!';
-  const textMetrics = ctx.measureText(notifText);
-  const paddingX = 48;
-  const paddingY = 28;
-  const notifWidth = textMetrics.width + paddingX * 2;
-  const notifHeight = 64 + paddingY;
-  ctx.fillStyle = '#222';
-  ctx.strokeStyle = '#fff';
-  ctx.lineWidth = 4;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  const x = ctx.canvas.width / 2, y = ctx.canvas.height / 2;
-  ctx.fillRect(x - notifWidth/2, y - notifHeight/2, notifWidth, notifHeight);
-  ctx.strokeRect(x - notifWidth/2, y - notifHeight/2, notifWidth, notifHeight);
-  ctx.fillStyle = '#fff';
-  ctx.fillText(notifText, x, y);
-  ctx.restore();
-  gameState.showPowerupNotification--;
-  if (gameState.showPowerupNotification <= 0) gameState.showPowerupNotification = 0;
+  if (gameState.showPowerupNotification) { // If notification should show
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
+    ctx.globalAlpha = 0.92; // Slightly transparent
+    ctx.font = 'bold 32px Arial'; // Font
+    const notifText = 'Pick a powerup before entering the portal!'; // Notification text
+    const textMetrics = ctx.measureText(notifText); // Measure width
+    const paddingX = 48; // Horizontal padding
+    const paddingY = 28; // Vertical padding
+    const notifWidth = textMetrics.width + paddingX * 2; // Box width
+    const notifHeight = 64 + paddingY; // Box height
+    ctx.fillStyle = '#222'; // Box color
+    ctx.strokeStyle = '#fff'; // Border color
+    ctx.lineWidth = 4; // Border width
+    ctx.textAlign = 'center'; // Center text
+    ctx.textBaseline = 'middle'; // Middle align
+    const x = ctx.canvas.width / 2, y = ctx.canvas.height / 2; // Center of screen
+    ctx.fillRect(x - notifWidth/2, y - notifHeight/2, notifWidth, notifHeight); // Draw box
+    ctx.strokeRect(x - notifWidth/2, y - notifHeight/2, notifWidth, notifHeight); // Draw border
+    ctx.fillStyle = '#fff'; // Text color
+    ctx.fillText(notifText, x, y); // Draw text
+    ctx.restore();
+    gameState.showPowerupNotification--; // Decrease timer
+    if (gameState.showPowerupNotification <= 0) gameState.showPowerupNotification = 0; // Stop at 0
   }
 
   // --- Draw custom game over overlay ---
-  if (gameState.gameOver) {
+  if (gameState.gameOver) { // If game is over
     // Reset transform so overlay is always drawn in screen space
     ctx.save();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.globalAlpha = 0.85;
-    ctx.fillStyle = '#111';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.globalAlpha = 1.0;
-    ctx.fillStyle = '#fff';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
+    ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
+    ctx.globalAlpha = 0.85; // Slightly transparent
+    ctx.fillStyle = '#111'; // Box color
+    ctx.fillRect(0, 0, canvas.width, canvas.height); // Fill screen
+    ctx.globalAlpha = 1.0; // Opaque
+    ctx.fillStyle = '#fff'; // Text color
+    ctx.textAlign = 'center'; // Center text
+    ctx.textBaseline = 'top'; // Top align
     // Center overlay in the visible game world
-    const { scale, offsetX, offsetY } = getWorldTransform(canvas);
-    const worldCenterX = (GAME_WIDTH / 2 + offsetX) * scale;
-    const worldCenterY = (GAME_HEIGHT / 2 + offsetY) * scale;
+    const { scale, offsetX, offsetY } = getWorldTransform(canvas); // Get scale and offsets
+    const worldCenterX = (GAME_WIDTH / 2 + offsetX) * scale; // Center x
+    const worldCenterY = (GAME_HEIGHT / 2 + offsetY) * scale; // Center y
     // Calculate vertical layout
-    const titleFont = 'bold 80px Arial';
-    const scoreFont = '40px Arial';
-    const promptFont = '32px Arial';
-    const titleText = 'Game Over';
-    const scoreText = `Score: ${gameState.score || 0}`;
-    const promptText = 'Click to Restart';
+    const titleFont = 'bold 80px Arial'; // Title font
+    const scoreFont = '40px Arial'; // Score font
+    const promptFont = '32px Arial'; // Prompt font
+    const titleText = 'Game Over'; // Title text
+    const scoreText = `Score: ${gameState.score || 0}`; // Score text
+    const promptText = 'Click to Restart'; // Prompt text
     // Heights
-    const titleHeight = 80;
-    const scoreHeight = 40;
-    const promptHeight = 32;
-    const gap1 = 32;
-    const gap2 = 32;
+    const titleHeight = 80; // Title height
+    const scoreHeight = 40; // Score height
+    const promptHeight = 32; // Prompt height
+    const gap1 = 32; // Gap between title and score
+    const gap2 = 32; // Gap between score and prompt
     // Total height for vertical centering
-    const totalHeight = titleHeight + gap1 + scoreHeight + gap2 + promptHeight;
-    let y = worldCenterY - totalHeight / 2;
+    const totalHeight = titleHeight + gap1 + scoreHeight + gap2 + promptHeight; // Total height
+    let y = worldCenterY - totalHeight / 2; // Start y
     // Draw title
-    ctx.font = titleFont;
-    ctx.fillStyle = '#fff';
-    ctx.fillText(titleText, worldCenterX, y);
-    y += titleHeight + gap1;
+    ctx.font = titleFont; // Set font
+    ctx.fillStyle = '#fff'; // Text color
+    ctx.fillText(titleText, worldCenterX, y); // Draw title
+    y += titleHeight + gap1; // Move down
     // Draw score
-    ctx.font = scoreFont;
-    ctx.fillStyle = '#fff';
-    ctx.fillText(scoreText, worldCenterX, y);
-    y += scoreHeight + gap2;
+    ctx.font = scoreFont; // Set font
+    ctx.fillStyle = '#fff'; // Text color
+    ctx.fillText(scoreText, worldCenterX, y); // Draw score
+    y += scoreHeight + gap2; // Move down
     // Draw prompt
-    ctx.font = promptFont;
-    ctx.fillStyle = '#0ff';
-    ctx.fillText(promptText, worldCenterX, y);
+    ctx.font = promptFont; // Set font
+    ctx.fillStyle = '#0ff'; // Prompt color
+    ctx.fillText(promptText, worldCenterX, y); // Draw prompt
     ctx.restore();
     // Add click-to-restart event (only once)
-    if (!canvas._restartHandler) {
-      canvas._restartHandler = () => window.location.reload();
-      canvas.addEventListener('mousedown', canvas._restartHandler);
+    if (!canvas._restartHandler) { // If not already set
+      canvas._restartHandler = () => window.location.reload(); // Reload page on click
+      canvas.addEventListener('mousedown', canvas._restartHandler); // Add event
     }
-  } else if (canvas._restartHandler) {
+  } else if (canvas._restartHandler) { // If not game over but handler exists
     // Remove handler if not game over
-    canvas.removeEventListener('mousedown', canvas._restartHandler);
-    canvas._restartHandler = null;
+    canvas.removeEventListener('mousedown', canvas._restartHandler); // Remove event
+    canvas._restartHandler = null; // Clear handler
   }
 
   // --- Draw all bullets ---
-  ctx.fillStyle = 'lime';
-  for (const b of bullets) {
+  ctx.fillStyle = 'lime'; // Bullet color
+  for (const b of bullets) { // For each bullet
     ctx.beginPath();
-    ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+    ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2); // Draw bullet
     ctx.fill();
   }
 
   // --- Draw all enemies as small squares (level one)
-  ctx.fillStyle = '#a020f0'; // purple
-  for (const enemy of enemies) {
-    ctx.fillRect(enemy.x, enemy.y, enemy.size, enemy.size);
+  ctx.fillStyle = '#a020f0'; // Enemy color (purple)
+  for (const enemy of enemies) { // For each enemy
+    ctx.fillRect(enemy.x, enemy.y, enemy.size, enemy.size); // Draw enemy
   }
 
   ctx.restore(); // Restore to pre-transform state
 }
 
 // --- Helper: Draw the player in its current shape ---
-function drawPlayer(ctx, player) {
-  ctx.fillStyle = 'red';
+function drawPlayer(ctx, player) { // Draws the player based on its shape
+  ctx.fillStyle = 'red'; // Player color
   ctx.beginPath();
-  if (player.currentShape === 'square') {
+  if (player.currentShape === 'square') { // If square
     // Draw a filled square
-    ctx.fillRect(player.x, player.y, player.size, player.size);
-  } else if (player.currentShape === 'circle') {
+    ctx.fillRect(player.x, player.y, player.size, player.size); // Draw square
+  } else if (player.currentShape === 'circle') { // If circle
     // Draw a filled circle
-    ctx.arc(player.x + player.size / 2, player.y + player.size / 2, player.size / 2, 0, Math.PI * 2);
+    ctx.arc(player.x + player.size / 2, player.y + player.size / 2, player.size / 2, 0, Math.PI * 2); // Draw circle
     ctx.fill();
-  } else if (player.currentShape === 'triangle') {
+  } else if (player.currentShape === 'triangle') { // If triangle
     // Draw a triangle pointing in aim direction
     ctx.save();
-    ctx.translate(player.x + player.size / 2, player.y + player.size / 2);
-    ctx.rotate(player.aimAngle || 0);
+    ctx.translate(player.x + player.size / 2, player.y + player.size / 2); // Move to center
+    ctx.rotate(player.aimAngle || 0); // Rotate to aim
     ctx.beginPath();
     ctx.moveTo(player.size / 2, 0); // Tip (front)
     ctx.lineTo(-player.size / 2, -player.size / 2); // Back left
@@ -335,17 +335,17 @@ function drawPlayer(ctx, player) {
     ctx.closePath();
     ctx.fill();
     ctx.restore();
-  } else if (player.currentShape === 'star') {
+  } else if (player.currentShape === 'star') { // If star
     // Draw a spinning star
     ctx.save();
-    ctx.translate(player.x + player.size / 2, player.y + player.size / 2);
-    let spinAngle = 0;
-    if (player.spinning && player.spinTime > 0) {
+    ctx.translate(player.x + player.size / 2, player.y + player.size / 2); // Move to center
+    let spinAngle = 0; // Start angle
+    if (player.spinning && player.spinTime > 0) { // If spinning
       // Spin angle based on remaining spinTime (full spin in 15 frames)
-      spinAngle = (2 * Math.PI) * (1 - player.spinTime / 15);
+      spinAngle = (2 * Math.PI) * (1 - player.spinTime / 15); // Calculate angle
     }
-    ctx.rotate(spinAngle);
-    drawStar(ctx, 0, 0, 5, player.size / 2, player.size / 4);
+    ctx.rotate(spinAngle); // Rotate
+    drawStar(ctx, 0, 0, 5, player.size / 2, player.size / 4); // Draw star
     ctx.fill();
     ctx.restore();
   }
