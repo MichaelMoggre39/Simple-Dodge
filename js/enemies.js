@@ -2,7 +2,7 @@
 // enemies.js -- Handles enemy state and logic
 // This file manages all enemy creation, movement, collision, and removal in the game.
 
-import { createExplosion, createSparks, createColoredSparks, addScreenShake, COLORS } from './particles.js'; // Import particle effects and color palette
+import { createExplosion, createSparks, createColoredSparks, createEnergyLine, addScreenShake, COLORS } from './particles.js'; // Import particle effects and color palette
 import { playSound } from './audio.js'; // Import sound effects
 
 export const enemies = []; // This array stores all the enemies currently in the game
@@ -76,17 +76,35 @@ export function updateEnemies(player, bullets, onPlayerHit, onEnemyDestroyed) { 
       }
     }
   }
-  // Star spin attack: destroy enemies on contact while spinning
+  // Star spin attack: destroy enemies within AOE range while spinning
   if (player.currentShape === 'star' && player.spinning && player.spinTime > 0) { // If player is spinning star
+    const spinRadius = player.size * 1.8; // Extended AOE radius (about 3.6x larger area)
+    const playerCenterX = player.x + player.size / 2; // Player center X
+    const playerCenterY = player.y + player.size / 2; // Player center Y
+    
     for (let i = enemies.length - 1; i >= 0; i--) { // Go through all enemies backwards
       const enemy = enemies[i];
-      if (rectRectColliding(player, enemy)) { // If player touches enemy
-        // Visual and audio effects
-        createExplosion(enemy.x + enemy.size / 2, enemy.y + enemy.size / 2, COLORS.starKill, 8); // Star kill explosion
-        addScreenShake(4, 6); // Add a bigger screen shake
+      const enemyCenterX = enemy.x + enemy.size / 2; // Enemy center X
+      const enemyCenterY = enemy.y + enemy.size / 2; // Enemy center Y
+      
+      // Calculate distance from player center to enemy center
+      const dx = enemyCenterX - playerCenterX;
+      const dy = enemyCenterY - playerCenterY;
+      const distance = Math.hypot(dx, dy);
+      
+      // Check if enemy is within the spin AOE radius
+      if (distance <= spinRadius) {
+        // Visual and audio effects - enhanced for AOE
+        createExplosion(enemy.x + enemy.size / 2, enemy.y + enemy.size / 2, COLORS.starKill, 12); // Bigger explosion
+        createColoredSparks(enemy.x + enemy.size / 2, enemy.y + enemy.size / 2, COLORS.starKill, 8); // Extra sparks
+        
+        // Create connecting energy line effect from player to enemy
+        createEnergyLine(playerCenterX, playerCenterY, enemyCenterX, enemyCenterY, COLORS.starKill);
+        
+        addScreenShake(5, 8); // Stronger screen shake for AOE
         playSound.enemyDestroy(); // Play enemy destroy sound
         enemies.splice(i, 1); // Remove enemy
-        if (onEnemyDestroyed) onEnemyDestroyed(2); // 2 points for spin
+        if (onEnemyDestroyed) onEnemyDestroyed(2); // 2 points for AOE spin
       }
     }
   }

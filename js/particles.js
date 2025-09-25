@@ -20,7 +20,8 @@ export const PARTICLE_TYPES = {
   TRAIL: 'trail',         // Bullet trail
   PICKUP: 'pickup',       // Pickup effect
   DAMAGE: 'damage',       // Damage numbers
-  HEALING: 'healing'      // Healing effect (not used)
+  HEALING: 'healing',     // Healing effect (not used)
+  ENERGY_LINE: 'energyLine' // Energy line for star AOE
 };
 
 // --- Create different types of particle effects ---
@@ -128,6 +129,31 @@ export function createDamageNumbers(x, y, damage) {
   });
 }
 
+export function createEnergyLine(startX, startY, endX, endY, color = COLORS.starKill) {
+  // Create a series of particles along the line from start to end
+  const distance = Math.hypot(endX - startX, endY - startY);
+  const steps = Math.max(8, Math.floor(distance / 10)); // At least 8 particles, more for longer distances
+  
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps; // Interpolation factor (0 to 1)
+    const x = startX + (endX - startX) * t;
+    const y = startY + (endY - startY) * t;
+    
+    particles.push({
+      type: 'energyLine', // New particle type
+      x: x + (Math.random() - 0.5) * 4, // Small random offset
+      y: y + (Math.random() - 0.5) * 4, // Small random offset
+      vx: (Math.random() - 0.5) * 1, // Small random movement
+      vy: (Math.random() - 0.5) * 1, // Small random movement
+      life: 8, // Short lifetime for quick flash
+      maxLife: 8, // Max lifetime
+      size: 3 + Math.random() * 2, // Varying size
+      color: color, // Energy color
+      alpha: 0.9 // Bright alpha
+    });
+  }
+}
+
 // --- Update all particles ---
 export function updateParticles() {
   for (let i = particles.length - 1; i >= 0; i--) { // Go through all particles backwards
@@ -148,6 +174,9 @@ export function updateParticles() {
       p.vx *= 0.98; // Slow down
     } else if (p.type === PARTICLE_TYPES.DAMAGE) {
       p.vy += 0.1; // Gravity for damage numbers
+    } else if (p.type === 'energyLine') {
+      p.vx *= 0.8; // Slow down quickly
+      p.vy *= 0.8; // Slow down quickly
     }
     // Update life and alpha
     p.life--; // Decrease life
@@ -170,6 +199,15 @@ export function renderParticles(ctx) {
       ctx.font = `bold ${p.size}px Arial`; // Set font
       ctx.textAlign = 'center'; // Center text
       ctx.fillText(p.text, p.x, p.y); // Draw text
+    } else if (p.type === 'energyLine') {
+      // Render energy line particles with glow
+      ctx.shadowColor = p.color; // Glow color
+      ctx.shadowBlur = 8; // Glow intensity
+      ctx.fillStyle = p.color; // Set color
+      ctx.beginPath(); // Start drawing
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); // Draw circle
+      ctx.fill(); // Fill circle
+      ctx.shadowBlur = 0; // Reset shadow
     } else {
       // Render particle dots
       ctx.fillStyle = p.color; // Set color

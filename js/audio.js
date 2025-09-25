@@ -99,11 +99,16 @@ class AudioManager {
   
   // Play sound when player spins
   playSpin() {
-    for (let i = 0; i < 5; i++) {
+    // Enhanced spin sound with more impact for AOE
+    for (let i = 0; i < 8; i++) {
       setTimeout(() => {
-        this.createTone(400 + i * 100, 0.05, 'triangle', 0.2); // Play a rising sequence
-      }, i * 30);
+        this.createTone(300 + i * 80, 0.08, 'sawtooth', 0.25); // Play a rising sequence with sawtooth for more power
+      }, i * 25);
     }
+    // Add a sweeping whoosh sound
+    setTimeout(() => {
+      this.createNoise(0.3, 0.15); // Add noise for whoosh effect
+    }, 50);
   }
   
   // Play sound when entering a portal

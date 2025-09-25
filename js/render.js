@@ -133,7 +133,7 @@ export function render(ctx, canvas, gameState) { // Draws everything on the scre
     } else if (hoveredPickup.type === 'triangle') {
       info = 'Triangle: Aim with mouse, shoot with click.';
     } else if (hoveredPickup.type === 'star') {
-      info = 'Star: Spin attack with Left Click. Invulnerable while spinning.';
+      info = 'Star: AOE Spin attack with Left Click. Destroys enemies in wide range!';
     }
     // Draw info box higher above the pickup
     ctx.save();
@@ -411,6 +411,39 @@ function drawPlayer(ctx, player) { // Draws the player based on its shape
     ctx.stroke();
     ctx.restore();
   } else if (player.currentShape === 'star') { // If star
+    // Draw AOE range indicator when spinning
+    if (player.spinning && player.spinTime > 0) {
+      ctx.save();
+      const centerX = player.x + player.size / 2;
+      const centerY = player.y + player.size / 2;
+      const spinRadius = player.size * 1.8; // Match the collision radius
+      
+      // Draw pulsing AOE ring
+      const pulseIntensity = Math.sin(Date.now() * 0.02) * 0.3 + 0.7; // Pulsing effect
+      ctx.globalAlpha = 0.3 * pulseIntensity;
+      
+      // Outer ring
+      ctx.strokeStyle = COLORS.starKill;
+      ctx.lineWidth = 4;
+      ctx.setLineDash([8, 4]); // Dashed line
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, spinRadius, 0, Math.PI * 2);
+      ctx.stroke();
+      
+      // Inner filled circle for more dramatic effect
+      ctx.globalAlpha = 0.15 * pulseIntensity;
+      const aoeGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, spinRadius);
+      aoeGradient.addColorStop(0, COLORS.starKill + '40'); // Semi-transparent center
+      aoeGradient.addColorStop(1, COLORS.starKill + '00'); // Fully transparent edge
+      ctx.fillStyle = aoeGradient;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, spinRadius, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.setLineDash([]); // Reset line dash
+      ctx.restore();
+    }
+    
     // Draw a spinning star
     ctx.save();
     ctx.translate(player.x + player.size / 2, player.y + player.size / 2); // Move to center
@@ -418,9 +451,25 @@ function drawPlayer(ctx, player) { // Draws the player based on its shape
     if (player.spinning && player.spinTime > 0) { // If spinning
       // Spin angle based on remaining spinTime (full spin in 15 frames)
       spinAngle = (2 * Math.PI) * (1 - player.spinTime / 15); // Calculate angle
-      // Add a subtle glow while spinning
+      // Enhanced glow while spinning
       ctx.shadowColor = COLORS.starKill;
-      ctx.shadowBlur = 25;
+      ctx.shadowBlur = 35; // Increased glow
+      
+      // Add rotating energy trails around the star
+      for (let i = 0; i < 8; i++) {
+        const trailAngle = spinAngle + (i * Math.PI / 4);
+        const trailDistance = player.size * 0.8;
+        const trailX = Math.cos(trailAngle) * trailDistance;
+        const trailY = Math.sin(trailAngle) * trailDistance;
+        
+        ctx.save();
+        ctx.globalAlpha = 0.6;
+        ctx.fillStyle = COLORS.starKill;
+        ctx.beginPath();
+        ctx.arc(trailX, trailY, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
     }
     ctx.rotate(spinAngle); // Rotate
     // Golden gradient fill for star
