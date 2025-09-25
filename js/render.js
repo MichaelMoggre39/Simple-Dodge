@@ -129,7 +129,7 @@ export function render(ctx, canvas, gameState) { // Draws everything on the scre
   if (hoveredPickup) { // If player is over a pickup
     let info = '';
     if (hoveredPickup.type === 'circle') {
-      info = 'Circle: Dash with Left Click. Fast movement burst.';
+      info = 'Circle: Blazing Dash with Left Click. Leaves fiery trail!';
     } else if (hoveredPickup.type === 'triangle') {
       info = 'Triangle: Aim with mouse, shoot with click.';
     } else if (hoveredPickup.type === 'star') {
@@ -358,29 +358,70 @@ function drawPlayer(ctx, player) { // Draws the player based on its shape
     ctx.strokeStyle = '#bdbdbd';
     ctx.strokeRect(player.x, player.y, player.size, player.size);
     ctx.restore();
-  } else if (player.currentShape === 'circle') { // Dash form: red circle
+  } else if (player.currentShape === 'circle') { // Dash form: blazing circle
     ctx.save();
     const cx = player.x + player.size / 2;
     const cy = player.y + player.size / 2;
     const r = player.size / 2;
-    // Dash glow when active
+    
+    // Enhanced dash effects when active
     if (player.dashTime > 0) {
+      // Intense flame aura around the circle
+      ctx.shadowColor = '#ff4400';
+      ctx.shadowBlur = 40; // Increased glow intensity
+      
+      // Draw flame wisps around the circle
+      const flameTime = Date.now() * 0.01;
+      for (let i = 0; i < 6; i++) {
+        const angle = (i / 6) * Math.PI * 2 + flameTime;
+        const flameDistance = r + 8 + Math.sin(flameTime * 2 + i) * 4;
+        const flameX = cx + Math.cos(angle) * flameDistance;
+        const flameY = cy + Math.sin(angle) * flameDistance;
+        
+        ctx.globalAlpha = 0.7;
+        ctx.fillStyle = i % 2 === 0 ? '#ff6600' : '#ff4400';
+        ctx.beginPath();
+        ctx.arc(flameX, flameY, 3 + Math.sin(flameTime * 3 + i) * 1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1.0;
+      
+      // Pulsing outer ring
+      const pulseIntensity = Math.sin(Date.now() * 0.03) * 0.3 + 0.7;
+      ctx.globalAlpha = 0.4 * pulseIntensity;
+      ctx.strokeStyle = '#ff8800';
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r + 12, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
+    } else {
+      // Normal glow when not dashing
       ctx.shadowColor = COLORS.dashKill;
-      ctx.shadowBlur = 25;
+      ctx.shadowBlur = 15;
     }
-    // Red radial gradient
+    
+    // Enhanced gradient with flame colors when dashing
     const grad = ctx.createRadialGradient(cx, cy, r * 0.2, cx, cy, r);
-    grad.addColorStop(0, '#ff8a80');
-    grad.addColorStop(0.6, '#ff5252');
-    grad.addColorStop(1, '#e53935');
+    if (player.dashTime > 0) {
+      grad.addColorStop(0, '#ffffff'); // White hot center
+      grad.addColorStop(0.3, '#ffdd00'); // Yellow
+      grad.addColorStop(0.6, '#ff6600'); // Orange
+      grad.addColorStop(1, '#ff2200'); // Red edge
+    } else {
+      grad.addColorStop(0, '#ff8a80');
+      grad.addColorStop(0.6, '#ff5252');
+      grad.addColorStop(1, '#e53935');
+    }
     ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.fill();
-    // White outline
+    
+    // Enhanced outline
     ctx.shadowBlur = 0;
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = player.dashTime > 0 ? 3 : 2; // Thicker outline when dashing
+    ctx.strokeStyle = player.dashTime > 0 ? '#ffaa00' : '#ffffff'; // Golden outline when dashing
     ctx.stroke();
     ctx.restore();
   } else if (player.currentShape === 'triangle') { // Shooter form: green triangle

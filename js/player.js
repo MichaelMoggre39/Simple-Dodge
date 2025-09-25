@@ -3,7 +3,7 @@
 
 import { GAME_WIDTH, GAME_HEIGHT, PLAYER_SIZE, PLAYER_SPEED } from './constants.js'; // Import constants for game size and player
 import { shootBullet } from './bullets.js'; // Import function to shoot bullets
-import { createTrail } from './particles.js'; // Import particle effects
+import { createTrail, createFlameTrail } from './particles.js'; // Import particle effects
 import { playSound } from './audio.js'; // Import sound effects
 
 // --- Factory: Create a new player object ---
@@ -82,13 +82,30 @@ function handleCircleDash(player, keys) { // Handles dashing for circle form
     player.x += player.dashDX * dashSpeed; // Move in dash direction
     player.y += player.dashDY * dashSpeed;
     
-    // Create dash trail particles
+    // Create intense flame trail behind the dash
+    const centerX = player.x + player.size / 2;
+    const centerY = player.y + player.size / 2;
+    const intensity = player.dashTime / 10; // Higher intensity at start of dash
+    
+    // Create multiple flame bursts for intense effect
+    for (let i = 0; i < 3; i++) {
+      const trailDistance = (i + 1) * 12; // Stagger trail positions
+      createFlameTrail(
+        centerX - player.dashDX * trailDistance,
+        centerY - player.dashDY * trailDistance,
+        player.dashDX * dashSpeed,
+        player.dashDY * dashSpeed,
+        intensity
+      );
+    }
+    
+    // Also create some regular trail particles for contrast
     createTrail(
-      player.x + player.size / 2 - player.dashDX * 20,
-      player.y + player.size / 2 - player.dashDY * 20,
-      -player.dashDX * 5,
-      -player.dashDY * 5,
-      '#ff4444'
+      centerX - player.dashDX * 15,
+      centerY - player.dashDY * 15,
+      -player.dashDX * 3,
+      -player.dashDY * 3,
+      '#ffaa00'
     );
   } else {
     // Normal movement if not dashing

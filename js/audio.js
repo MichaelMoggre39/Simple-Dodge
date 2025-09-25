@@ -91,10 +91,21 @@ class AudioManager {
     setTimeout(() => this.createTone(784, 0.15, 'sine', 0.3), 160); // G note
   }
   
-  // Play sound when player dashes
+  // Play sound when player dashes - enhanced flame dash
   playDash() {
-    this.createTone(1000, 0.2, 'sawtooth', 0.25); // First part
-    setTimeout(() => this.createTone(1200, 0.1, 'square', 0.2), 100); // Second part
+    // Whoosh sound with flame crackle
+    this.createTone(800, 0.15, 'sawtooth', 0.3); // Initial whoosh
+    setTimeout(() => this.createTone(1200, 0.1, 'square', 0.25), 50); // High pitch rush
+    setTimeout(() => this.createTone(600, 0.2, 'triangle', 0.2), 100); // Trailing flame sound
+    
+    // Add flame crackling effect
+    setTimeout(() => {
+      for (let i = 0; i < 5; i++) {
+        setTimeout(() => {
+          this.createNoise(0.02, 0.08); // Short crackle bursts
+        }, i * 30);
+      }
+    }, 80);
   }
   
   // Play sound when player spins

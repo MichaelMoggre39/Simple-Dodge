@@ -21,7 +21,8 @@ export const PARTICLE_TYPES = {
   PICKUP: 'pickup',       // Pickup effect
   DAMAGE: 'damage',       // Damage numbers
   HEALING: 'healing',     // Healing effect (not used)
-  ENERGY_LINE: 'energyLine' // Energy line for star AOE
+  ENERGY_LINE: 'energyLine', // Energy line for star AOE
+  FLAME_TRAIL: 'flameTrail' // Flame trail for circle dash
 };
 
 // --- Create different types of particle effects ---
@@ -154,6 +155,31 @@ export function createEnergyLine(startX, startY, endX, endY, color = COLORS.star
   }
 }
 
+export function createFlameTrail(x, y, vx, vy, intensity = 1) {
+  // Create flame particles behind the dashing circle
+  const flameColors = ['#ff4400', '#ff6600', '#ff8800', '#ffaa00', '#ffcc44']; // Hot to cool flame colors
+  const particleCount = Math.floor(3 * intensity) + 2; // More particles for higher intensity
+  
+  for (let i = 0; i < particleCount; i++) {
+    const color = flameColors[Math.floor(Math.random() * flameColors.length)]; // Random flame color
+    const spread = 15; // How much the flames spread out
+    
+    particles.push({
+      type: PARTICLE_TYPES.FLAME_TRAIL, // Flame trail type
+      x: x + (Math.random() - 0.5) * spread, // Random spread around position
+      y: y + (Math.random() - 0.5) * spread, // Random spread around position
+      vx: -vx * 0.3 + (Math.random() - 0.5) * 2, // Move opposite to dash direction with random spread
+      vy: -vy * 0.3 + (Math.random() - 0.5) * 2, // Move opposite to dash direction with random spread
+      life: 20 + Math.random() * 15, // Variable lifetime (20-35 frames)
+      maxLife: 35, // Max lifetime for alpha calculation
+      size: 2 + Math.random() * 4, // Variable size (2-6)
+      color: color, // Flame color
+      alpha: 0.8 + Math.random() * 0.2, // Bright start alpha
+      heat: 1.0 // Heat level for color shifting
+    });
+  }
+}
+
 // --- Update all particles ---
 export function updateParticles() {
   for (let i = particles.length - 1; i >= 0; i--) { // Go through all particles backwards
@@ -177,6 +203,22 @@ export function updateParticles() {
     } else if (p.type === 'energyLine') {
       p.vx *= 0.8; // Slow down quickly
       p.vy *= 0.8; // Slow down quickly
+    } else if (p.type === PARTICLE_TYPES.FLAME_TRAIL) {
+      p.vx *= 0.92; // Gradual slowdown
+      p.vy *= 0.92; // Gradual slowdown
+      p.vy -= 0.15; // Float upward like real flames
+      p.heat *= 0.97; // Cool down over time
+      
+      // Shift color from hot to cool as flame cools
+      if (p.heat < 0.7) {
+        p.color = '#ff8800'; // Orange
+      }
+      if (p.heat < 0.4) {
+        p.color = '#ffaa00'; // Yellow-orange
+      }
+      if (p.heat < 0.2) {
+        p.color = '#ffcc44'; // Yellow
+      }
     }
     // Update life and alpha
     p.life--; // Decrease life
@@ -207,6 +249,24 @@ export function renderParticles(ctx) {
       ctx.beginPath(); // Start drawing
       ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); // Draw circle
       ctx.fill(); // Fill circle
+      ctx.shadowBlur = 0; // Reset shadow
+    } else if (p.type === PARTICLE_TYPES.FLAME_TRAIL) {
+      // Render flame particles with intense glow and varying opacity
+      ctx.shadowColor = p.color; // Flame glow
+      ctx.shadowBlur = 12 + p.size; // Glow intensity based on size
+      ctx.fillStyle = p.color; // Set flame color
+      ctx.beginPath(); // Start drawing
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); // Draw flame particle
+      ctx.fill(); // Fill particle
+      
+      // Add inner bright core for hot flames
+      if (p.heat > 0.5) {
+        ctx.shadowBlur = 6; // Smaller inner glow
+        ctx.fillStyle = '#ffffff'; // White hot core
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * 0.4, 0, Math.PI * 2); // Smaller inner circle
+        ctx.fill();
+      }
       ctx.shadowBlur = 0; // Reset shadow
     } else {
       // Render particle dots
